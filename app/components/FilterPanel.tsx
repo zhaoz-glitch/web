@@ -122,75 +122,73 @@ export function FilterPanel({
                     </label>
 
                     {checked && (
-                      <div className="mt-2 flex h-8 items-stretch gap-1.5">
-                        {isRange(value) ? (
-                          <>
-                            <input
-                              type="text"
-                              inputMode="decimal"
-                              autoComplete="off"
-                              placeholder={`最小${field.unit ? ` (${field.unit})` : ""}`}
-                              value={value.min ?? ""}
-                              onChange={(e) =>
-                                onFilterChange(field.key, {
-                                  ...value,
-                                  min: e.target.value,
-                                })
-                              }
-                              className="h-8 min-w-0 flex-1 rounded border border-gray-300 px-2 text-xs focus:border-emerald-500 focus:outline-none"
-                            />
-                            <span className="flex h-8 w-4 shrink-0 items-center justify-center text-[10px] text-gray-400">~</span>
-                            <input
-                              type="text"
-                              inputMode="decimal"
-                              autoComplete="off"
-                              placeholder={`最大${field.unit ? ` (${field.unit})` : ""}`}
-                              value={value.max ?? ""}
-                              onChange={(e) =>
-                                onFilterChange(field.key, {
-                                  ...value,
-                                  max: e.target.value,
-                                })
-                              }
-                              className="h-8 min-w-0 flex-1 rounded border border-gray-300 px-2 text-xs focus:border-emerald-500 focus:outline-none"
-                            />
-                          </>
-                        ) : (
-                          <>
-                            <select
-                              value={value.op}
-                              onChange={(e) =>
-                                onFilterChange(field.key, {
-                                  ...value,
-                                  op: e.target.value,
-                                })
-                              }
-                              className="h-8 w-12 shrink-0 rounded border border-gray-300 bg-white px-1 text-xs font-medium focus:border-emerald-500 focus:outline-none"
-                              aria-label="运算符"
-                            >
-                              {(field.ops ?? [">", "<", ">=", "<="]).map((op) => (
-                                <option key={op} value={op}>
-                                  {op === ">" ? ">" : op === "<" ? "<" : op === ">=" ? "≥" : "≤"}
-                                </option>
-                              ))}
-                            </select>
-                            <input
-                              type="text"
-                              inputMode="decimal"
-                              autoComplete="off"
-                              placeholder={`输入数值${field.unit ? ` (${field.unit})` : ""}`}
-                              value={value.value ?? ""}
-                              onChange={(e) =>
-                                onFilterChange(field.key, {
-                                  ...value,
-                                  value: e.target.value,
-                                })
-                              }
-                              className="h-8 min-w-0 flex-1 rounded border border-gray-300 px-2 text-xs focus:border-emerald-500 focus:outline-none"
-                            />
-                          </>
-                        )}
-                      </div>
+                      isRange(value) ? (
+                        <div className="mt-2 grid grid-cols-[1fr_20px_1fr] items-center gap-1.5">
+                          <input
+                            type="text"
+                            inputMode="decimal"
+                            autoComplete="off"
+                            placeholder={`最小${field.unit ? ` (${field.unit})` : ""}`}
+                            value={value.min ?? ""}
+                            onChange={(e) =>
+                              onFilterChange(field.key, {
+                                ...value,
+                                min: e.target.value,
+                              })
+                            }
+                            className="block h-8 w-full rounded border border-gray-300 px-2 text-xs focus:border-emerald-500 focus:outline-none"
+                          />
+                          <span className="block text-center text-[10px] text-gray-400">~</span>
+                          <input
+                            type="text"
+                            inputMode="decimal"
+                            autoComplete="off"
+                            placeholder={`最大${field.unit ? ` (${field.unit})` : ""}`}
+                            value={value.max ?? ""}
+                            onChange={(e) =>
+                              onFilterChange(field.key, {
+                                ...value,
+                                max: e.target.value,
+                              })
+                            }
+                            className="block h-8 w-full rounded border border-gray-300 px-2 text-xs focus:border-emerald-500 focus:outline-none"
+                          />
+                        </div>
+                      ) : (
+                        <div className="mt-2 grid grid-cols-[3.5rem_1fr] items-center gap-1.5">
+                          <select
+                            value={value.op}
+                            onChange={(e) =>
+                              onFilterChange(field.key, {
+                                ...value,
+                                op: e.target.value,
+                              })
+                            }
+                            className="block h-8 w-full rounded border border-gray-300 bg-white px-1 text-xs font-medium focus:border-emerald-500 focus:outline-none"
+                            aria-label="运算符"
+                          >
+                            {(field.ops ?? [">", "<", ">=", "<="]).map((op) => (
+                              <option key={op} value={op}>
+                                {op === ">" ? ">" : op === "<" ? "<" : op === ">=" ? "≥" : "≤"}
+                              </option>
+                            ))}
+                          </select>
+                          <input
+                            type="text"
+                            inputMode="decimal"
+                            autoComplete="off"
+                            placeholder={`输入数值${field.unit ? ` (${field.unit})` : ""}`}
+                            value={value.value ?? ""}
+                            onChange={(e) =>
+                              onFilterChange(field.key, {
+                                ...value,
+                                value: e.target.value,
+                              })
+                            }
+                            className="block h-8 w-full rounded border border-gray-300 px-2 text-xs focus:border-emerald-500 focus:outline-none"
+                          />
+                        </div>
+                      )
                     )}
                   </div>
                 );
