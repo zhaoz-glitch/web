@@ -86,6 +86,8 @@ export function FilterPanel({
 
             <div className="grid grid-cols-1 gap-2 md:grid-cols-2 xl:grid-cols-3">
               {dim.fields.map((field) => {
+                // 跳过 has_carbon_data，它由下方的单选按钮控制
+                if (field.key === "has_carbon_data") return null;
                 const value = filterState[field.key];
                 if (!value) return null;
                 const checked = value.enabled;
@@ -120,7 +122,7 @@ export function FilterPanel({
                     </label>
 
                     {checked && (
-                      <div className="mt-2 flex items-center gap-1.5">
+                      <div className="mt-2 flex items-stretch gap-1.5">
                         {isRange(value) ? (
                           <>
                             <input
@@ -134,9 +136,9 @@ export function FilterPanel({
                                   min: e.target.value,
                                 })
                               }
-                              className="w-full rounded border border-gray-300 px-2 py-1 text-xs focus:border-emerald-500 focus:outline-none"
+                              className="min-w-0 flex-1 rounded border border-gray-300 px-2 py-1 text-xs focus:border-emerald-500 focus:outline-none"
                             />
-                            <span className="text-[10px] text-gray-400">~</span>
+                            <span className="self-center text-[10px] text-gray-400">~</span>
                             <input
                               type="number"
                               inputMode="decimal"
@@ -148,7 +150,7 @@ export function FilterPanel({
                                   max: e.target.value,
                                 })
                               }
-                              className="w-full rounded border border-gray-300 px-2 py-1 text-xs focus:border-emerald-500 focus:outline-none"
+                              className="min-w-0 flex-1 rounded border border-gray-300 px-2 py-1 text-xs focus:border-emerald-500 focus:outline-none"
                             />
                           </>
                         ) : (
@@ -161,7 +163,8 @@ export function FilterPanel({
                                   op: e.target.value,
                                 })
                               }
-                              className="rounded border border-gray-300 px-1 py-1 text-xs focus:border-emerald-500 focus:outline-none"
+                              className="shrink-0 rounded border border-gray-300 bg-white px-2 py-1 text-xs font-medium focus:border-emerald-500 focus:outline-none"
+                              aria-label="运算符"
                             >
                               {(field.ops ?? [">", "<", ">=", "<="]).map((op) => (
                                 <option key={op} value={op}>
@@ -172,7 +175,7 @@ export function FilterPanel({
                             <input
                               type="number"
                               inputMode="decimal"
-                              placeholder={field.unit ?? "数值"}
+                              placeholder={`输入数值${field.unit ? ` (${field.unit})` : ""}`}
                               value={value.value ?? ""}
                               onChange={(e) =>
                                 onFilterChange(field.key, {
@@ -180,7 +183,7 @@ export function FilterPanel({
                                   value: e.target.value,
                                 })
                               }
-                              className="w-full rounded border border-gray-300 px-2 py-1 text-xs focus:border-emerald-500 focus:outline-none"
+                              className="min-w-0 flex-1 rounded border border-gray-300 px-2 py-1 text-xs focus:border-emerald-500 focus:outline-none"
                             />
                           </>
                         )}
