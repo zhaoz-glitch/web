@@ -1,8 +1,12 @@
 /**
  * API client for the Low-Carbon Value Screener backend.
  *
- * All requests use relative paths (/api/...) which the Vite dev server
- * proxies to http://localhost:5000 — see vite.config.ts `server.proxy`.
+ * Local dev: requests use relative paths (/api/...) which the Vite dev
+ * server proxies to http://localhost:5000 — see vite.config.ts `server.proxy`.
+ *
+ * Static hosting (e.g. GitHub Pages): set `VITE_API_BASE` at build time to
+ * the public URL of the deployed Flask backend; all requests are then
+ * prefixed with it (CORS must be enabled on the backend).
  *
  * Every request automatically includes the ``Authorization`` header with
  * the stored token (if any), so protected endpoints just work.
@@ -18,6 +22,8 @@ import type {
   CarbonTrendPoint,
 } from "~/types";
 
+const API_BASE = (import.meta.env.VITE_API_BASE as string | undefined) ?? "";
+
 /** Merge the auth header into a fetch init object. */
 function withAuth(init?: RequestInit): RequestInit {
   const token = getAuthToken();
@@ -32,7 +38,7 @@ function withAuth(init?: RequestInit): RequestInit {
 }
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
-  const res = await fetch(path, withAuth(init));
+  const res = await fetch(`${API_BASE}${path}`, withAuth(init));
   if (!res.ok) {
     let message = `HTTP ${res.status}`;
     try {
@@ -83,7 +89,7 @@ export function getCarbonTrend(
 
 /** POST /api/screener/export and trigger a CSV file download. */
 export async function exportCsv(body: ScreenerRequest): Promise<void> {
-  const res = await fetch("/api/screener/export", withAuth({
+  const res = await fetch(`${API_BASE}/api/screener/export`, withAuth({
     method: "POST",
     body: JSON.stringify(body),
   }));
@@ -114,7 +120,7 @@ export async function loginApi(
   email: string,
   password: string,
 ): Promise<LoginResponse> {
-  const res = await fetch("/api/auth/login", {
+  const res = await fetch(`${API_BASE}/api/auth/login`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ email, password }),
@@ -132,7 +138,7 @@ export async function registerApi(
   password: string,
   name: string,
 ): Promise<LoginResponse> {
-  const res = await fetch("/api/auth/register", {
+  const res = await fetch(`${API_BASE}/api/auth/register`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ email, password, name }),

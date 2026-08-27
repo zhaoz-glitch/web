@@ -3,6 +3,9 @@ import tailwindcss from "@tailwindcss/vite";
 import { defineConfig } from "vite";
 
 export default defineConfig({
+  // GitHub Pages serves this repo under /web/, so all built asset URLs
+  // must be prefixed accordingly (leave undefined for local dev).
+  base: process.env.GITHUB_PAGES === "true" ? "/web/" : "/",
   plugins: [tailwindcss(), reactRouter()],
   resolve: {
     tsconfigPaths: true,

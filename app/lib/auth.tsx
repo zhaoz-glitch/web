@@ -73,7 +73,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setToken(stored);
 
     // Validate the token by calling /api/auth/me
-    fetch("/api/auth/me", {
+    const apiBase = (import.meta.env.VITE_API_BASE as string | undefined) ?? "";
+    fetch(`${apiBase}/api/auth/me`, {
       headers: { Authorization: stored },
     })
       .then(async (res) => {
