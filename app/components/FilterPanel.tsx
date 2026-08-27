@@ -43,14 +43,14 @@ export function FilterPanel({
   running,
 }: Props) {
   return (
-    <div className="rounded-xl border border-gray-200 bg-white shadow-sm">
-      <div className="flex items-center justify-between border-b border-gray-100 px-4 py-3">
-        <span className="text-sm font-semibold text-gray-900">自定义筛选条件</span>
+    <div className="rounded-xl border border-gray-200 bg-white shadow-sm dark:border-gray-800 dark:bg-gray-900">
+      <div className="flex items-center justify-between border-b border-gray-100 px-4 py-3 dark:border-gray-800">
+        <span className="text-sm font-semibold text-gray-900 dark:text-gray-100">自定义筛选条件</span>
         <div className="flex gap-2">
           <button
             type="button"
             onClick={onReset}
-            className="rounded-md border border-gray-300 px-3 py-1.5 text-xs text-gray-600 hover:bg-gray-50"
+            className="rounded-md border border-gray-300 px-3 py-1.5 text-xs text-gray-600 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-800"
           >
             重置
           </button>
@@ -58,7 +58,7 @@ export function FilterPanel({
             type="button"
             onClick={onRun}
             disabled={running}
-            className="rounded-md bg-emerald-600 px-4 py-1.5 text-xs font-medium text-white hover:bg-emerald-700 disabled:opacity-50"
+            className="rounded-md bg-emerald-600 px-4 py-1.5 text-xs font-medium text-white hover:bg-emerald-700 disabled:opacity-50 dark:bg-emerald-400 dark:text-emerald-950 dark:hover:bg-emerald-300"
           >
             {running ? "筛选中…" : "执行筛选"}
           </button>
@@ -72,14 +72,14 @@ export function FilterPanel({
               <span
                 className={`rounded px-1.5 py-0.5 text-[10px] font-medium ${
                   dim.key === "market"
-                    ? "bg-blue-50 text-blue-700"
-                    : "bg-emerald-50 text-emerald-700"
+                    ? "bg-blue-50 text-blue-700 dark:bg-blue-950/60 dark:text-blue-400"
+                    : "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-400"
                 }`}
               >
                 {dim.key === "market" ? "维度A" : "维度B"}
               </span>
-              <span className="text-xs font-medium text-gray-700">{dim.label}</span>
-              <span className="text-[10px] text-gray-400">
+              <span className="text-xs font-medium text-gray-700 dark:text-gray-300">{dim.label}</span>
+              <span className="text-[10px] text-gray-400 dark:text-gray-500">
                 {dim.update_frequency}
               </span>
             </div>
@@ -97,8 +97,8 @@ export function FilterPanel({
                     key={field.key}
                     className={`rounded-lg border p-2.5 transition ${
                       checked
-                        ? "border-emerald-400 bg-emerald-50/30"
-                        : "border-gray-200"
+                        ? "border-emerald-400 bg-emerald-50/30 dark:border-emerald-500/60 dark:bg-emerald-950/20"
+                        : "border-gray-200 dark:border-gray-700"
                     }`}
                   >
                     <label className="flex items-center gap-2 text-xs">
@@ -113,11 +113,11 @@ export function FilterPanel({
                         }
                         className="h-3.5 w-3.5 accent-emerald-600"
                       />
-                      <span className="font-medium text-gray-700">
+                      <span className="font-medium text-gray-700 dark:text-gray-300">
                         {field.label}
                       </span>
                       {field.unit && (
-                        <span className="text-gray-400">({field.unit})</span>
+                        <span className="text-gray-400 dark:text-gray-500">({field.unit})</span>
                       )}
                     </label>
 
@@ -136,9 +136,9 @@ export function FilterPanel({
                                 min: e.target.value,
                               })
                             }
-                            className="block h-8 w-full rounded border border-gray-300 px-2 text-xs focus:border-emerald-500 focus:outline-none"
+                            className="block h-8 w-full rounded border border-gray-300 bg-white px-2 text-xs text-gray-900 placeholder-gray-400 focus:border-emerald-500 focus:outline-none dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 dark:placeholder-gray-500 dark:focus:border-emerald-400"
                           />
-                          <span className="block text-center text-[10px] text-gray-400">~</span>
+                          <span className="block text-center text-[10px] text-gray-400 dark:text-gray-500">~</span>
                           <input
                             type="text"
                             inputMode="decimal"
@@ -151,7 +151,7 @@ export function FilterPanel({
                                 max: e.target.value,
                               })
                             }
-                            className="block h-8 w-full rounded border border-gray-300 px-2 text-xs focus:border-emerald-500 focus:outline-none"
+                            className="block h-8 w-full rounded border border-gray-300 bg-white px-2 text-xs text-gray-900 placeholder-gray-400 focus:border-emerald-500 focus:outline-none dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 dark:placeholder-gray-500 dark:focus:border-emerald-400"
                           />
                         </div>
                       ) : (
@@ -164,7 +164,7 @@ export function FilterPanel({
                                 op: e.target.value,
                               })
                             }
-                            className="block h-8 w-full rounded border border-gray-300 bg-white px-1 text-xs font-medium focus:border-emerald-500 focus:outline-none"
+                            className="block h-8 w-full rounded border border-gray-300 bg-white px-1 text-xs font-medium text-gray-900 focus:border-emerald-500 focus:outline-none dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 dark:focus:border-emerald-400"
                             aria-label="运算符"
                           >
                             {(field.ops ?? [">", "<", ">=", "<="]).map((op) => (
@@ -185,7 +185,7 @@ export function FilterPanel({
                                 value: e.target.value,
                               })
                             }
-                            className="block h-8 w-full rounded border border-gray-300 px-2 text-xs focus:border-emerald-500 focus:outline-none"
+                            className="block h-8 w-full rounded border border-gray-300 bg-white px-2 text-xs text-gray-900 placeholder-gray-400 focus:border-emerald-500 focus:outline-none dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 dark:placeholder-gray-500 dark:focus:border-emerald-400"
                           />
                         </div>
                       )
@@ -198,8 +198,8 @@ export function FilterPanel({
         ))}
 
         {/* Carbon data availability filter */}
-        <div className="flex items-center gap-3 rounded-lg border border-gray-200 bg-gray-50 p-2.5">
-          <span className="text-xs font-medium text-gray-700">碳数据覆盖：</span>
+        <div className="flex items-center gap-3 rounded-lg border border-gray-200 bg-gray-50 p-2.5 dark:border-gray-800 dark:bg-gray-800/50">
+          <span className="text-xs font-medium text-gray-700 dark:text-gray-300">碳数据覆盖：</span>
           {(
             [
               ["true", "仅含碳数据标的"],
@@ -215,7 +215,7 @@ export function FilterPanel({
                 onChange={() => onCarbonModeChange(mode)}
                 className="h-3.5 w-3.5 accent-emerald-600"
               />
-              <span className="text-gray-600">{label}</span>
+              <span className="text-gray-600 dark:text-gray-400">{label}</span>
             </label>
           ))}
         </div>

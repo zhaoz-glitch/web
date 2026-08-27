@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Link } from "react-router";
 import type { Route } from "./+types/home";
 import { exportCsv, getFields, getTemplates, runScreener } from "~/lib/api";
+import { useAuth } from "~/lib/auth";
 import { TemplateSelector } from "~/components/TemplateSelector";
 import { FilterPanel, describeFilter } from "~/components/FilterPanel";
 import { ResultsTable, type SortKey } from "~/components/ResultsTable";
@@ -105,6 +107,8 @@ export function meta({}: Route.MetaArgs) {
 const PAGE_SIZE = 20;
 
 export default function Home() {
+  const { user, logout } = useAuth();
+
   // Metadata
   const [dimensions, setDimensions] = useState<Dimension[]>([]);
   const [templates, setTemplates] = useState<Template[]>([]);
@@ -277,28 +281,48 @@ export default function Home() {
   }, [filterState, carbonMode]);
 
   return (
-    <div className="min-h-screen bg-gray-100">
+    <div className="min-h-screen bg-gray-100 dark:bg-gray-950">
       {/* Header */}
-      <header className="border-b border-gray-200 bg-white">
+      <header className="border-b border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
         <div className="mx-auto max-w-7xl px-4 py-4 sm:px-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-emerald-600">
+              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-emerald-600 dark:bg-emerald-500">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2">
                   <path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z" />
                   <path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12" />
                 </svg>
               </div>
               <div>
-                <h1 className="text-lg font-bold text-gray-900">低碳价值筛选器</h1>
-                <p className="text-xs text-gray-500">
+                <h1 className="text-lg font-bold text-gray-900 dark:text-gray-100">低碳价值筛选器</h1>
+                <p className="text-xs text-gray-500 dark:text-gray-400">
                   Low-Carbon Value Screener · 美股行情 × 碳排放数据
                 </p>
               </div>
             </div>
-            <div className="hidden text-right text-xs text-gray-400 sm:block">
-              <div>行情数据：TradingView（实时/日更）</div>
-              <div>碳排数据：Bavest（年度披露）</div>
+            <div className="flex items-center gap-4">
+              <div className="hidden text-right text-xs text-gray-400 sm:block dark:text-gray-500">
+                <div>行情数据：TradingView（实时/日更）</div>
+                <div>碳排数据：Bavest（年度披露）</div>
+              </div>
+              <div className="flex items-center gap-2 border-l border-gray-200 pl-4 dark:border-gray-700">
+                <Link
+                  to="/db"
+                  className="rounded-md border border-gray-300 px-2.5 py-1 text-xs text-gray-600 transition hover:bg-gray-50 dark:border-gray-600 dark:text-gray-400 dark:hover:bg-gray-800"
+                >
+                  数据表
+                </Link>
+                <span className="text-xs font-medium text-gray-700 dark:text-gray-300">
+                  {user?.name}
+                </span>
+                <button
+                  type="button"
+                  onClick={logout}
+                  className="rounded-md border border-gray-300 px-2.5 py-1 text-xs text-gray-600 transition hover:bg-gray-50 dark:border-gray-600 dark:text-gray-400 dark:hover:bg-gray-800"
+                >
+                  退出
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -306,7 +330,7 @@ export default function Home() {
 
       <main className="mx-auto max-w-7xl space-y-4 px-4 py-6 sm:px-6">
         {error && (
-          <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600">
+          <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600 dark:border-red-900/60 dark:bg-red-950/40 dark:text-red-400">
             {error}
           </div>
         )}
@@ -336,11 +360,11 @@ export default function Home() {
         {/* Active filter chips */}
         {activeChips.length > 0 && (
           <div className="flex flex-wrap items-center gap-1.5">
-            <span className="text-xs text-gray-400">当前条件：</span>
+            <span className="text-xs text-gray-400 dark:text-gray-500">当前条件：</span>
             {activeChips.map((chip, i) => (
               <span
                 key={`${chip.key}-${i}`}
-                className="rounded-full bg-white px-2.5 py-0.5 text-xs text-emerald-700 ring-1 ring-emerald-200"
+                className="rounded-full bg-white px-2.5 py-0.5 text-xs text-emerald-700 ring-1 ring-emerald-200 dark:bg-gray-900 dark:text-emerald-400 dark:ring-emerald-900"
               >
                 {chip.label}
               </span>
@@ -364,7 +388,7 @@ export default function Home() {
           exporting={exporting}
         />
 
-        <footer className="pb-6 pt-2 text-center text-xs text-gray-400">
+        <footer className="pb-6 pt-2 text-center text-xs text-gray-400 dark:text-gray-500">
           MVP 版本 · 数据仅供研究参考，不构成投资建议
         </footer>
       </main>

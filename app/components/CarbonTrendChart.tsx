@@ -12,7 +12,7 @@ export function CarbonTrendChart({ data }: Props) {
   const valid = data.filter((d) => d.total_emissions != null);
   if (valid.length === 0) {
     return (
-      <div className="flex h-48 items-center justify-center text-sm text-gray-400">
+      <div className="flex h-48 items-center justify-center text-sm text-gray-400 dark:text-gray-500">
         暂无碳排放历史数据
       </div>
     );
@@ -60,13 +60,13 @@ export function CarbonTrendChart({ data }: Props) {
 
   return (
     <div className="w-full">
-      <div className="mb-2 flex items-center gap-4 text-xs text-gray-500">
+      <div className="mb-2 flex items-center gap-4 text-xs text-gray-500 dark:text-gray-400">
         <span className="flex items-center gap-1">
-          <span className="inline-block h-2.5 w-2.5 rounded-sm bg-emerald-500/60" />
+          <span className="inline-block h-2.5 w-2.5 rounded-sm bg-emerald-500/60 dark:bg-emerald-400/50" />
           总排放量 (tCO2e)
         </span>
         <span className="flex items-center gap-1">
-          <span className="inline-block h-0.5 w-4 bg-blue-600" />
+          <span className="inline-block h-0.5 w-4 bg-blue-600 dark:bg-blue-400" />
           碳强度 (t/$M)
         </span>
       </div>
@@ -84,8 +84,9 @@ export function CarbonTrendChart({ data }: Props) {
                 y2={y}
                 stroke="#e5e7eb"
                 strokeWidth="0.5"
+                className="stroke-gray-200 dark:stroke-gray-800"
               />
-              <text x={PAD.left - 6} y={y + 3} textAnchor="end" fontSize="9" fill="#9ca3af">
+              <text x={PAD.left - 6} y={y + 3} textAnchor="end" fontSize="9" fill="#9ca3af" className="fill-gray-400 dark:fill-gray-500">
                 {fmtEmission(val)}
               </text>
             </g>
@@ -101,6 +102,7 @@ export function CarbonTrendChart({ data }: Props) {
             width={barW}
             height={PAD.top + plotH - yEmission(d.total_emissions as number)}
             fill="rgb(16 185 129 / 0.55)"
+            className="fill-emerald-500/55 dark:fill-emerald-400/45"
             rx="2"
           >
             <title>
@@ -111,7 +113,7 @@ export function CarbonTrendChart({ data }: Props) {
 
         {/* Carbon intensity line */}
         {linePath && (
-          <path d={linePath} fill="none" stroke="#2563eb" strokeWidth="2" strokeLinecap="round" />
+          <path d={linePath} fill="none" stroke="#2563eb" strokeWidth="2" strokeLinecap="round" className="stroke-blue-600 dark:stroke-blue-400" />
         )}
         {valid.map((d, i) =>
           d.carbon_intensity_revenue != null ? (
@@ -121,6 +123,7 @@ export function CarbonTrendChart({ data }: Props) {
               cy={yIntensity(d.carbon_intensity_revenue)}
               r="3"
               fill="#2563eb"
+              className="fill-blue-600 dark:fill-blue-400"
             >
               <title>
                 {d.report_year}: {d.carbon_intensity_revenue.toFixed(1)} t/$M
@@ -138,6 +141,7 @@ export function CarbonTrendChart({ data }: Props) {
             textAnchor="middle"
             fontSize="10"
             fill="#6b7280"
+            className="fill-gray-500 dark:fill-gray-400"
           >
             {d.report_year}
           </text>
