@@ -34,8 +34,8 @@ jobs:
         env:
           # Serve the app from https://zhaoz-glitch.github.io/web/
           GITHUB_PAGES: "true"
-          # Point the frontend at a deployed backend, e.g.:
-          # VITE_API_BASE: https://your-backend.example.com
+          # Point the frontend at the deployed Flask backend
+          VITE_API_BASE: https://low-carbon-backend-production.up.railway.app
         run: npm run build
 
       # SPA fallback: deep links like /web/login hit 404.html which
