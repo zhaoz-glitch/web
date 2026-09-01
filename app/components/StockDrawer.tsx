@@ -57,14 +57,14 @@ export function StockDrawer({ symbol, onClose }: Props) {
           <div>
             <div className="text-lg font-bold text-gray-900 dark:text-gray-100">{symbol}</div>
             <div className="text-sm text-gray-500 dark:text-gray-400">
-              {detail?.company.name ?? "加载中…"}
+              {detail?.company.name ?? "Loading…"}
             </div>
           </div>
           <button
             type="button"
             onClick={onClose}
             className="rounded-md p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-600 dark:text-gray-500 dark:hover:bg-gray-800 dark:hover:text-gray-300"
-            aria-label="关闭"
+            aria-label="Close"
           >
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <path d="M18 6 6 18M6 6l12 12" />
@@ -74,11 +74,11 @@ export function StockDrawer({ symbol, onClose }: Props) {
 
         <div className="space-y-4 p-5">
           {loading && (
-            <div className="py-16 text-center text-sm text-gray-400 dark:text-gray-500">加载详情中…</div>
+            <div className="py-16 text-center text-sm text-gray-400 dark:text-gray-500">Loading details…</div>
           )}
           {error && (
             <div className="rounded-lg bg-red-50 p-4 text-sm text-red-600 dark:bg-red-950/40 dark:text-red-400">
-              加载失败：{error}
+              Failed to load: {error}
             </div>
           )}
           {detail && (
@@ -95,10 +95,10 @@ export function StockDrawer({ symbol, onClose }: Props) {
 
               {/* Financial metrics */}
               <div>
-                <h3 className="mb-2 text-sm font-semibold text-gray-900 dark:text-gray-100">财务概览</h3>
+                <h3 className="mb-2 text-sm font-semibold text-gray-900 dark:text-gray-100">Financials</h3>
                 <div className="grid grid-cols-3 gap-2">
                   <StatCard
-                    label="市值"
+                    label="Mkt Cap"
                     value={
                       detail.financials?.market_cap != null
                         ? `$${(detail.financials.market_cap / 1e9).toFixed(0)}B`
@@ -114,7 +114,7 @@ export function StockDrawer({ symbol, onClose }: Props) {
                     value={detail.financials?.pb?.toFixed(1) ?? "—"}
                   />
                   <StatCard
-                    label="股息率"
+                    label="Div. Yield"
                     value={
                       detail.financials?.dividend_yield != null
                         ? `${detail.financials.dividend_yield.toFixed(2)}%`
@@ -122,7 +122,7 @@ export function StockDrawer({ symbol, onClose }: Props) {
                     }
                   />
                   <StatCard
-                    label="净利润率"
+                    label="Net Margin"
                     value={
                       detail.financials?.net_profit_margin != null
                         ? `${detail.financials.net_profit_margin.toFixed(1)}%`
@@ -130,7 +130,7 @@ export function StockDrawer({ symbol, onClose }: Props) {
                     }
                   />
                   <StatCard
-                    label="营收增长"
+                    label="Rev. Growth"
                     value={
                       detail.financials?.revenue_growth != null
                         ? `${detail.financials.revenue_growth.toFixed(1)}%`
@@ -143,42 +143,46 @@ export function StockDrawer({ symbol, onClose }: Props) {
               {/* Carbon data */}
               <div>
                 <h3 className="mb-2 flex items-center gap-2 text-sm font-semibold text-gray-900 dark:text-gray-100">
-                  碳排放数据
+                  Carbon Data
                   {detail.carbon && (
                     <span className="rounded bg-emerald-50 px-1.5 py-0.5 text-[10px] font-normal text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-400">
-                      {detail.carbon.report_year} 年报
+                      {detail.carbon.report_year} report
                     </span>
                   )}
                 </h3>
                 {detail.carbon ? (
                   <div className="grid grid-cols-3 gap-2">
                     <StatCard
-                      label="碳强度"
+                      label="Intensity"
                       value={`${detail.carbon.carbon_intensity_revenue?.toFixed(1) ?? "—"}`}
-                      sub="tCO2e / $M 营收"
+                      sub="tCO2e / $M revenue"
                     />
                     <StatCard
-                      label="总排放量"
+                      label="Emissions"
                       value={
                         detail.carbon.total_emissions != null
-                          ? `${(detail.carbon.total_emissions / 1e4).toFixed(0)}万`
+                          ? detail.carbon.total_emissions >= 1e6
+                            ? `${(detail.carbon.total_emissions / 1e6).toFixed(1)}M t`
+                            : detail.carbon.total_emissions >= 1e3
+                              ? `${(detail.carbon.total_emissions / 1e3).toFixed(0)}K t`
+                              : `${detail.carbon.total_emissions} t`
                           : "—"
                       }
                       sub="tCO2e (Scope 1+2)"
                     />
                     <StatCard
-                      label="碳排同比"
+                      label="Carbon YoY"
                       value={
                         detail.carbon.carbon_change_yoy != null
                           ? `${detail.carbon.carbon_change_yoy > 0 ? "+" : ""}${detail.carbon.carbon_change_yoy.toFixed(1)}%`
                           : "—"
                       }
-                      sub={detail.carbon.data_source ?? "Bavest"}
+                      sub={detail.carbon.data_source ?? "Clarity AI"}
                     />
                   </div>
                 ) : (
                   <div className="rounded-lg border border-dashed border-gray-300 p-4 text-center text-sm text-gray-400 dark:border-gray-700 dark:text-gray-500">
-                    该公司暂无碳排放披露数据
+                    No carbon disclosure for this company
                   </div>
                 )}
               </div>
@@ -186,7 +190,7 @@ export function StockDrawer({ symbol, onClose }: Props) {
               {/* 5-year trend */}
               <div>
                 <h3 className="mb-2 text-sm font-semibold text-gray-900 dark:text-gray-100">
-                  碳排放趋势（近 5 年）
+                  5-Year Carbon Trend
                 </h3>
                 <div className="rounded-lg border border-gray-200 bg-white p-3 dark:border-gray-800 dark:bg-gray-900">
                   <CarbonTrendChart data={detail.carbon_history} />

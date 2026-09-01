@@ -93,7 +93,7 @@ export async function exportCsv(body: ScreenerRequest): Promise<void> {
     method: "POST",
     body: JSON.stringify(body),
   }));
-  if (!res.ok) throw new Error(`导出失败 (HTTP ${res.status})`);
+  if (!res.ok) throw new Error(`Export failed (HTTP ${res.status})`);
 
   const blob = await res.blob();
   const url = URL.createObjectURL(blob);
@@ -127,7 +127,7 @@ export async function loginApi(
   });
   const body = await res.json();
   if (!res.ok) {
-    throw new Error(body?.error || "登录失败");
+    throw new Error(body?.error || "Sign-in failed");
   }
   return body as LoginResponse;
 }
@@ -145,41 +145,47 @@ export async function registerApi(
   });
   const body = await res.json();
   if (!res.ok) {
-    throw new Error(body?.error || "注册失败");
+    throw new Error(body?.error || "Sign-up failed");
   }
   return body as LoginResponse;
 }
 
-/** POST /api/auth/forgot-password — sends a 6-digit reset code to the email. */
-export async function forgotPasswordApi(email: string): Promise<string> {
-  const res = await fetch(`${API_BASE}/api/auth/forgot-password`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ email }),
-  });
-  const body = await res.json();
-  if (!res.ok) {
-    throw new Error(body?.error || "发送失败");
-  }
-  return body?.message || "验证码已发送到你的邮箱";
+export interface ForgotPasswordResponse {
+  message: string;
+  dev_code?: string;
 }
 
-/** POST /api/auth/reset-password — redeems the code and sets a new password. */
-export async function resetPasswordApi(
+/** POST /api/auth/forgot-password — send a 6-digit code to the given email. */
+export function forgotPasswordApi(
+  email: string,
+): Promise<ForgotPasswordResponse> {
+  return request<ForgotPasswordResponse>("/api/auth/forgot-password", {
+    method: "POST",
+    body: JSON.stringify({ email }),
+  });
+}
+
+/** POST /api/auth/verify-reset-code */
+export function verifyResetCodeApi(
   email: string,
   code: string,
-  password: string,
-): Promise<string> {
-  const res = await fetch(`${API_BASE}/api/auth/reset-password`, {
+): Promise<{ message: string }> {
+  return request("/api/auth/verify-reset-code", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ email, code, password }),
+    body: JSON.stringify({ email, code }),
   });
-  const body = await res.json();
-  if (!res.ok) {
-    throw new Error(body?.error || "重置失败");
-  }
-  return body?.message || "密码已重置";
+}
+
+/** POST /api/auth/reset-password */
+export function resetPasswordApi(
+  email: string,
+  code: string,
+  newPassword: string,
+): Promise<{ message: string }> {
+  return request("/api/auth/reset-password", {
+    method: "POST",
+    body: JSON.stringify({ email, code, new_password: newPassword }),
+  });
 }
 
 // ----------------------------------------------------------------------- //
@@ -224,4 +230,30 @@ export function getDbTableData(
   return request<DbTableData>(
     `/api/db/tables/${encodeURIComponent(tableName)}?limit=${limit}&offset=${offset}`,
   );
+}
+
+export interface SyncJobResult {
+  id?: number;
+  job_name: string;
+  status: string;
+  source?: string | null;
+  rows_upserted?: number;
+  message?: string | null;
+  started_at?: string | null;
+  finished_at?: string | null;
+}
+
+export function getJobStatus(): Promise<{
+  market: SyncJobResult | null;
+  carbon: SyncJobResult | null;
+}> {
+  return request("/api/jobs/status");
+}
+
+export function syncMarket(): Promise<SyncJobResult> {
+  return request("/api/jobs/sync-market", { method: "POST", body: "{}" });
+}
+
+export function syncCarbon(): Promise<SyncJobResult> {
+  return request("/api/jobs/sync-carbon", { method: "POST", body: "{}" });
 }

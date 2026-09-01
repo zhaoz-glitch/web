@@ -30,7 +30,7 @@ export const links: Route.LinksFunction = () => [
 
 export function Layout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="zh-CN">
+    <html lang="en">
       <head>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -97,7 +97,7 @@ function AuthGuard() {
             />
           </svg>
           <span className="text-sm text-gray-500 dark:text-gray-400">
-            加载中…
+            Loading…
           </span>
         </div>
       </div>
