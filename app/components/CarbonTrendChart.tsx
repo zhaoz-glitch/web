@@ -13,7 +13,7 @@ export function CarbonTrendChart({ data }: Props) {
   if (valid.length === 0) {
     return (
       <div className="flex h-48 items-center justify-center text-sm text-gray-400 dark:text-gray-500">
-        No carbon history
+        暂无碳排放历史数据
       </div>
     );
   }
@@ -63,14 +63,14 @@ export function CarbonTrendChart({ data }: Props) {
       <div className="mb-2 flex items-center gap-4 text-xs text-gray-500 dark:text-gray-400">
         <span className="flex items-center gap-1">
           <span className="inline-block h-2.5 w-2.5 rounded-sm bg-emerald-500/60 dark:bg-emerald-400/50" />
-          Total emissions (tCO2e)
+          总排放量 (tCO2e)
         </span>
         <span className="flex items-center gap-1">
           <span className="inline-block h-0.5 w-4 bg-blue-600 dark:bg-blue-400" />
-          Intensity (t/$M)
+          碳强度 (t/$M)
         </span>
       </div>
-      <svg viewBox={`0 0 ${W} ${H}`} className="w-full" role="img" aria-label="Carbon trend chart">
+      <svg viewBox={`0 0 ${W} ${H}`} className="w-full" role="img" aria-label="碳排趋势图">
         {/* Y axis grid lines (emission scale) */}
         {[0, 0.25, 0.5, 0.75, 1].map((t) => {
           const y = PAD.top + plotH - t * plotH;

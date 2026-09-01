@@ -8,11 +8,7 @@ import {
 } from "react";
 import { Link, Navigate, useNavigate } from "react-router";
 import { BrandPanel } from "~/components/BrandPanel";
-import {
-  forgotPasswordApi,
-  resetPasswordApi,
-  verifyResetCodeApi,
-} from "~/lib/api";
+import { forgotPasswordApi, resetPasswordApi } from "~/lib/api";
 import { useAuth } from "~/lib/auth";
 
 export function meta() {
@@ -57,8 +53,8 @@ export default function ForgotPasswordPage() {
 
     setSubmitting(true);
     try {
-      const result = await forgotPasswordApi(email.trim());
-      setDevCode(result.dev_code ?? null);
+      await forgotPasswordApi(email.trim());
+      setDevCode(null);
       setStep("code");
       setCountdown(60);
       setCode(["", "", "", "", "", ""]);
@@ -107,20 +103,10 @@ export default function ForgotPasswordPage() {
     if (pasted.length === 6) void handleVerifyCode(pasted);
   };
 
-  const handleVerifyCode = async (fullCode: string) => {
-    if (submitting) return;
-    setSubmitting(true);
+  const handleVerifyCode = (fullCode: string) => {
+    if (fullCode.length !== 6) return;
     setError("");
-    try {
-      await verifyResetCodeApi(email.trim(), fullCode);
-      setStep("password");
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Verification failed");
-      setCode(["", "", "", "", "", ""]);
-      inputRefs.current[0]?.focus();
-    } finally {
-      setSubmitting(false);
-    }
+    setStep("password");
   };
 
   const handleResetPassword = async (e: FormEvent) => {

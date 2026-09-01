@@ -77,35 +77,35 @@ export function ResultsTable({
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
 
   const columns: { key: SortKey | null; label: string; align?: string }[] = [
-    { key: null, label: "Symbol" },
-    { key: null, label: "Sector" },
-    { key: "close", label: "Price" },
-    { key: "market_cap_basic", label: "Mkt Cap" },
+    { key: null, label: "代码 / 名称" },
+    { key: null, label: "行业" },
+    { key: "close", label: "股价" },
+    { key: "market_cap_basic", label: "市值" },
     { key: "price_earnings_ttm", label: "PE (TTM)" },
     { key: null, label: "PB" },
-    { key: "dividend_yield_recent", label: "Yield" },
-    { key: "carbon_intensity_revenue", label: "Intensity" },
-    { key: "total_emissions", label: "Emissions" },
-    { key: "carbon_change_yoy", label: "Carbon YoY" },
+    { key: "dividend_yield_recent", label: "股息率" },
+    { key: "carbon_intensity_revenue", label: "碳强度 (t/$M)" },
+    { key: "total_emissions", label: "总排放" },
+    { key: "carbon_change_yoy", label: "碳排 YoY" },
   ];
 
   return (
     <div className="rounded-xl border border-gray-200 bg-white shadow-sm dark:border-gray-800 dark:bg-gray-900">
       {/* Toolbar */}
       <div className="flex items-center justify-between border-b border-gray-100 px-4 py-3 dark:border-gray-800">
-        <span className="min-w-0 text-sm font-semibold text-gray-900 dark:text-gray-100">
-          Results
+        <span className="text-sm font-semibold text-gray-900 dark:text-gray-100">
+          筛选结果
           <span className="ml-2 text-xs font-normal text-gray-500 dark:text-gray-400">
-            {total} stocks
+            共 {total} 只标的
           </span>
         </span>
         <button
           type="button"
           onClick={onExport}
           disabled={exporting || total === 0}
-          className="shrink-0 whitespace-nowrap rounded-md border border-emerald-600 px-3 py-1.5 text-xs font-medium text-emerald-700 hover:bg-emerald-50 disabled:opacity-50 dark:border-emerald-500 dark:text-emerald-400 dark:hover:bg-emerald-950/30"
+          className="rounded-md border border-emerald-600 px-3 py-1.5 text-xs font-medium text-emerald-700 hover:bg-emerald-50 disabled:opacity-50 dark:border-emerald-500 dark:text-emerald-400 dark:hover:bg-emerald-950/30"
         >
-          {exporting ? "Exporting…" : "Export CSV"}
+          {exporting ? "导出中…" : "导出 CSV"}
         </button>
       </div>
 
@@ -117,7 +117,7 @@ export function ResultsTable({
               {columns.map((col) => (
                 <th
                   key={col.label}
-                  className={`whitespace-nowrap px-3 py-2.5 font-medium ${
+                  className={`px-3 py-2.5 font-medium ${
                     col.key ? "cursor-pointer select-none hover:text-gray-900 dark:hover:text-gray-100" : ""
                   } ${col.key === "close" || col.key === "market_cap_basic" ? "text-right" : "text-left"}`}
                   onClick={col.key ? () => onSort(col.key!) : undefined}
@@ -149,7 +149,7 @@ export function ResultsTable({
                   colSpan={columns.length}
                   className="px-3 py-12 text-center text-sm text-gray-400 dark:text-gray-500"
                 >
-                  No matching stocks. Try adjusting filters.
+                  没有符合条件的标的，请调整筛选条件
                 </td>
               </tr>
             ) : (
@@ -187,7 +187,7 @@ export function ResultsTable({
                         {fmtNum(row.carbon_intensity_revenue, 1)}
                       </span>
                     ) : (
-                      <span className="text-xs text-gray-400 dark:text-gray-500">N/A</span>
+                      <span className="text-xs text-gray-400 dark:text-gray-500">无数据</span>
                     )}
                   </td>
                   <td className="px-3 py-2.5 tabular-nums text-gray-600 dark:text-gray-300">
@@ -206,24 +206,24 @@ export function ResultsTable({
       {/* Pagination */}
       <div className="flex items-center justify-between border-t border-gray-100 px-4 py-3 dark:border-gray-800">
         <span className="text-xs text-gray-500 dark:text-gray-400">
-          Page {page} / {totalPages}
+          第 {page} / {totalPages} 页
         </span>
         <div className="flex gap-1">
           <button
             type="button"
             disabled={page <= 1}
             onClick={() => onPageChange(page - 1)}
-            className="whitespace-nowrap rounded border border-gray-300 px-2.5 py-1 text-xs text-gray-600 hover:bg-gray-50 disabled:opacity-40 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
+            className="rounded border border-gray-300 px-2.5 py-1 text-xs text-gray-600 hover:bg-gray-50 disabled:opacity-40 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
           >
-            Prev
+            上一页
           </button>
           <button
             type="button"
             disabled={page >= totalPages}
             onClick={() => onPageChange(page + 1)}
-            className="whitespace-nowrap rounded border border-gray-300 px-2.5 py-1 text-xs text-gray-600 hover:bg-gray-50 disabled:opacity-40 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
+            className="rounded border border-gray-300 px-2.5 py-1 text-xs text-gray-600 hover:bg-gray-50 disabled:opacity-40 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
           >
-            Next
+            下一页
           </button>
         </div>
       </div>

@@ -1,4 +1,3 @@
-import { displayDimension, displayFieldLabel } from "~/lib/labels";
 import type { Dimension, FilterState, FilterValue, CarbonDataMode } from "~/types";
 
 interface Props {
@@ -22,7 +21,7 @@ export function describeFilter(key: string, value: FilterValue): string {
     const parts: string[] = [];
     if (value.min) parts.push(`≥ ${value.min}`);
     if (value.max) parts.push(`≤ ${value.max}`);
-    return parts.join(" · ");
+    return parts.join(" 且 ");
   }
   const opLabel: Record<string, string> = {
     ">": ">",
@@ -46,32 +45,30 @@ export function FilterPanel({
   return (
     <div className="rounded-xl border border-gray-200 bg-white shadow-sm dark:border-gray-800 dark:bg-gray-900">
       <div className="flex items-center justify-between border-b border-gray-100 px-4 py-3 dark:border-gray-800">
-        <span className="text-sm font-semibold text-gray-900 dark:text-gray-100">Custom Filters</span>
-        <div className="flex shrink-0 gap-2">
+        <span className="text-sm font-semibold text-gray-900 dark:text-gray-100">自定义筛选条件</span>
+        <div className="flex gap-2">
           <button
             type="button"
             onClick={onReset}
-            className="whitespace-nowrap rounded-md border border-gray-300 px-3 py-1.5 text-xs text-gray-600 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-800"
+            className="rounded-md border border-gray-300 px-3 py-1.5 text-xs text-gray-600 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-800"
           >
-            Reset
+            重置
           </button>
           <button
             type="button"
             onClick={onRun}
             disabled={running}
-            className="whitespace-nowrap rounded-md bg-emerald-600 px-4 py-1.5 text-xs font-medium text-white hover:bg-emerald-700 disabled:opacity-50 dark:bg-emerald-400 dark:text-emerald-950 dark:hover:bg-emerald-300"
+            className="rounded-md bg-emerald-600 px-4 py-1.5 text-xs font-medium text-white hover:bg-emerald-700 disabled:opacity-50 dark:bg-emerald-400 dark:text-emerald-950 dark:hover:bg-emerald-300"
           >
-            {running ? "Screening…" : "Run Screen"}
+            {running ? "筛选中…" : "执行筛选"}
           </button>
         </div>
       </div>
 
       <div className="space-y-4 p-4">
-        {dimensions.map((dim) => {
-          const meta = displayDimension(dim);
-          return (
+        {dimensions.map((dim) => (
           <div key={dim.key}>
-            <div className="mb-2 flex flex-wrap items-center gap-2">
+            <div className="mb-2 flex items-center gap-2">
               <span
                 className={`rounded px-1.5 py-0.5 text-[10px] font-medium ${
                   dim.key === "market"
@@ -79,11 +76,11 @@ export function FilterPanel({
                     : "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-400"
                 }`}
               >
-                {dim.key === "market" ? "A" : "B"}
+                {dim.key === "market" ? "维度A" : "维度B"}
               </span>
-              <span className="text-xs font-medium text-gray-700 dark:text-gray-300">{meta.label}</span>
+              <span className="text-xs font-medium text-gray-700 dark:text-gray-300">{dim.label}</span>
               <span className="text-[10px] text-gray-400 dark:text-gray-500">
-                {meta.frequency}
+                {dim.update_frequency}
               </span>
             </div>
 
@@ -116,8 +113,8 @@ export function FilterPanel({
                         }
                         className="h-3.5 w-3.5 accent-emerald-600"
                       />
-                      <span className="min-w-0 truncate font-medium text-gray-700 dark:text-gray-300">
-                        {displayFieldLabel(field)}
+                      <span className="font-medium text-gray-700 dark:text-gray-300">
+                        {field.label}
                       </span>
                       {field.unit && (
                         <span className="text-gray-400 dark:text-gray-500">({field.unit})</span>
@@ -131,7 +128,7 @@ export function FilterPanel({
                             type="text"
                             inputMode="decimal"
                             autoComplete="off"
-                            placeholder={field.unit ? `Min (${field.unit})` : "Min"}
+                            placeholder={`最小${field.unit ? ` (${field.unit})` : ""}`}
                             value={value.min ?? ""}
                             onChange={(e) =>
                               onFilterChange(field.key, {
@@ -146,7 +143,7 @@ export function FilterPanel({
                             type="text"
                             inputMode="decimal"
                             autoComplete="off"
-                            placeholder={field.unit ? `Max (${field.unit})` : "Max"}
+                            placeholder={`最大${field.unit ? ` (${field.unit})` : ""}`}
                             value={value.max ?? ""}
                             onChange={(e) =>
                               onFilterChange(field.key, {
@@ -168,7 +165,7 @@ export function FilterPanel({
                               })
                             }
                             className="block h-8 w-full rounded border border-gray-300 bg-white px-1 text-xs font-medium text-gray-900 focus:border-emerald-500 focus:outline-none dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 dark:focus:border-emerald-400"
-                            aria-label="Operator"
+                            aria-label="运算符"
                           >
                             {(field.ops ?? [">", "<", ">=", "<="]).map((op) => (
                               <option key={op} value={op}>
@@ -180,7 +177,7 @@ export function FilterPanel({
                             type="text"
                             inputMode="decimal"
                             autoComplete="off"
-                            placeholder={field.unit ? `Value (${field.unit})` : "Value"}
+                            placeholder={`输入数值${field.unit ? ` (${field.unit})` : ""}`}
                             value={value.value ?? ""}
                             onChange={(e) =>
                               onFilterChange(field.key, {
@@ -198,17 +195,16 @@ export function FilterPanel({
               })}
             </div>
           </div>
-          );
-        })}
+        ))}
 
         {/* Carbon data availability filter */}
-        <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 rounded-lg border border-gray-200 bg-gray-50 p-2.5 dark:border-gray-800 dark:bg-gray-800/50">
-          <span className="shrink-0 text-xs font-medium text-gray-700 dark:text-gray-300">Carbon data:</span>
+        <div className="flex items-center gap-3 rounded-lg border border-gray-200 bg-gray-50 p-2.5 dark:border-gray-800 dark:bg-gray-800/50">
+          <span className="text-xs font-medium text-gray-700 dark:text-gray-300">碳数据覆盖：</span>
           {(
             [
-              ["true", "With data"],
-              ["false", "No data"],
-              ["all", "All"],
+              ["true", "仅含碳数据标的"],
+              ["false", "仅无碳数据标的"],
+              ["all", "全部"],
             ] as const
           ).map(([mode, label]) => (
             <label key={mode} className="flex cursor-pointer items-center gap-1 text-xs">

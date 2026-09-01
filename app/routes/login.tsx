@@ -150,9 +150,9 @@ export default function LoginPage() {
 
           <div className="rounded-2xl border border-dashed border-ink-200 bg-white/60 px-4 py-3 text-xs text-ink-500">
             Classroom demo:
-            <span className="ml-1 font-medium text-ink-800">student@demo.com</span>
+            <span className="ml-1 font-medium text-ink-800">demo@lowcarbon.io</span>
             {" / "}
-            <span className="font-medium text-ink-800">Demo2026</span>
+            <span className="font-medium text-ink-800">demo123456</span>
           </div>
         </div>
       </div>

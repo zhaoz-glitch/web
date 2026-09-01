@@ -78,7 +78,7 @@ export default function DbWorkbench() {
       {/* Header */}
       <header className="border-b border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
         <div className="mx-auto max-w-7xl px-4 py-4 sm:px-6">
-          <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-emerald-600 dark:bg-emerald-500">
                 <svg
@@ -96,7 +96,7 @@ export default function DbWorkbench() {
               </div>
               <div>
                 <h1 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-                  Table Workbench
+                  数据表 Workbench
                 </h1>
                 <p className="text-xs text-gray-500 dark:text-gray-400">
                   SQLite · low_carbon_screener.db
@@ -104,9 +104,9 @@ export default function DbWorkbench() {
               </div>
               <Link
                 to="/"
-                className="ml-4 shrink-0 whitespace-nowrap rounded-md border border-gray-300 px-2.5 py-1 text-xs text-gray-600 transition hover:bg-gray-50 dark:border-gray-600 dark:text-gray-400 dark:hover:bg-gray-800"
+                className="ml-4 rounded-md border border-gray-300 px-2.5 py-1 text-xs text-gray-600 transition hover:bg-gray-50 dark:border-gray-600 dark:text-gray-400 dark:hover:bg-gray-800"
               >
-                ← Back to screener
+                ← 返回筛选器
               </Link>
             </div>
             <div className="flex items-center gap-2 border-l border-gray-200 pl-4 dark:border-gray-700">
@@ -116,9 +116,9 @@ export default function DbWorkbench() {
               <button
                 type="button"
                 onClick={logout}
-                className="shrink-0 whitespace-nowrap rounded-md border border-gray-300 px-2.5 py-1 text-xs text-gray-600 transition hover:bg-gray-50 dark:border-gray-600 dark:text-gray-400 dark:hover:bg-gray-800"
+                className="rounded-md border border-gray-300 px-2.5 py-1 text-xs text-gray-600 transition hover:bg-gray-50 dark:border-gray-600 dark:text-gray-400 dark:hover:bg-gray-800"
               >
-                Sign out
+                退出
               </button>
             </div>
           </div>
@@ -141,7 +141,7 @@ export default function DbWorkbench() {
             {/* Table list sidebar */}
             <aside className="rounded-lg border border-gray-200 bg-white p-3 dark:border-gray-800 dark:bg-gray-900">
               <h2 className="mb-2 px-2 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
-                Tables ({tables.length})
+                数据表 ({tables.length})
               </h2>
               <ul className="space-y-1">
                 {tables.map((t) => (
@@ -172,17 +172,17 @@ export default function DbWorkbench() {
                 <div className="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
                   <h2 className="mb-3 text-sm font-semibold text-gray-900 dark:text-gray-100">
                     <span className="font-mono">{meta.name}</span>{" "}
-                    Columns ({meta.columns.length})
+                    字段定义 ({meta.columns.length})
                   </h2>
                   <div className="overflow-x-auto">
                     <table className="w-full text-left text-xs">
                       <thead>
                         <tr className="border-b border-gray-200 text-gray-500 dark:border-gray-700 dark:text-gray-400">
-                          <th className="py-2 pr-4 font-medium">Name</th>
-                          <th className="py-2 pr-4 font-medium">Type</th>
-                          <th className="py-2 pr-4 font-medium">Not null</th>
-                          <th className="py-2 pr-4 font-medium">PK</th>
-                          <th className="py-2 font-medium">Default</th>
+                          <th className="py-2 pr-4 font-medium">字段名</th>
+                          <th className="py-2 pr-4 font-medium">类型</th>
+                          <th className="py-2 pr-4 font-medium">非空</th>
+                          <th className="py-2 pr-4 font-medium">主键</th>
+                          <th className="py-2 font-medium">默认值</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
@@ -209,7 +209,7 @@ export default function DbWorkbench() {
               <div className="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
                 <div className="mb-3 flex items-center justify-between">
                   <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100">
-                    Data ({total} rows)
+                    数据 ({total} 行)
                   </h2>
                   {dataLoading && (
                     <div className="h-4 w-4 animate-spin rounded-full border-2 border-emerald-600 border-t-transparent dark:border-emerald-400" />
@@ -246,7 +246,7 @@ export default function DbWorkbench() {
                             colSpan={columns.length || 1}
                             className="py-8 text-center text-gray-400 dark:text-gray-500"
                           >
-                            Empty table
+                            空表
                           </td>
                         </tr>
                       )}
@@ -257,7 +257,7 @@ export default function DbWorkbench() {
                 {/* Pagination */}
                 <div className="mt-3 flex items-center justify-between border-t border-gray-100 pt-3 dark:border-gray-800">
                   <span className="text-xs text-gray-500 dark:text-gray-400">
-                    Page {page} / {totalPages} · {total} rows
+                    第 {page} / {totalPages} 页 · 共 {total} 行
                   </span>
                   <div className="flex gap-2">
                     <button
@@ -270,7 +270,7 @@ export default function DbWorkbench() {
                       }}
                       className="rounded-md border border-gray-300 px-3 py-1 text-xs text-gray-600 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40 dark:border-gray-600 dark:text-gray-400 dark:hover:bg-gray-800"
                     >
-                      Prev
+                      上一页
                     </button>
                     <button
                       type="button"
@@ -282,7 +282,7 @@ export default function DbWorkbench() {
                       }}
                       className="rounded-md border border-gray-300 px-3 py-1 text-xs text-gray-600 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40 dark:border-gray-600 dark:text-gray-400 dark:hover:bg-gray-800"
                     >
-                      Next
+                      下一页
                     </button>
                   </div>
                 </div>
