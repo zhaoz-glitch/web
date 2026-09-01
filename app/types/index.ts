@@ -63,6 +63,7 @@ export interface ScreenerRow {
   symbol: string;
   name: string;
   sector: string;
+  market_date: string | null;
   close: number | null;
   pe_ttm: number | null;
   turnover: number | null;
@@ -111,6 +112,7 @@ export interface Financials {
   week_52_change: number | null;
   net_profit_margin: number | null;
   revenue_growth: number | null;
+  data_source?: string;
 }
 
 export interface CarbonData {

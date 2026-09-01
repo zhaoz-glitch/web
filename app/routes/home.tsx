@@ -1,10 +1,13 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Link } from "react-router";
 import type { Route } from "./+types/home";
-import { exportCsv, getFields, getTemplates, runScreener } from "~/lib/api";
+import { exportCsv, getFields, getJobStatus, getTemplates, runScreener, syncMarket } from "~/lib/api";
+import { useAuth } from "~/lib/auth";
 import { TemplateSelector } from "~/components/TemplateSelector";
 import { FilterPanel, describeFilter } from "~/components/FilterPanel";
 import { ResultsTable, type SortKey } from "~/components/ResultsTable";
 import { StockDrawer } from "~/components/StockDrawer";
+import { displayFieldLabel } from "~/lib/labels";
 import type {
   CarbonDataMode,
   Dimension,
@@ -94,10 +97,10 @@ function templateToState(
 
 export function meta({}: Route.MetaArgs) {
   return [
-    { title: "低碳价值筛选器 | Low-Carbon Value Screener" },
+    { title: "Low-Carbon Value Screener" },
     {
       name: "description",
-      content: "整合美股实时行情与年度碳排放数据的绿色选股工具",
+      content: "Screen US equities with live market data and annual carbon emissions.",
     },
   ];
 }
@@ -105,6 +108,8 @@ export function meta({}: Route.MetaArgs) {
 const PAGE_SIZE = 20;
 
 export default function Home() {
+  const { user, logout } = useAuth();
+
   // Metadata
   const [dimensions, setDimensions] = useState<Dimension[]>([]);
   const [templates, setTemplates] = useState<Template[]>([]);
@@ -126,8 +131,21 @@ export default function Home() {
 
   // Drawer
   const [drawerSymbol, setDrawerSymbol] = useState<string | null>(null);
+  const [syncing, setSyncing] = useState(false);
+  const [asOf, setAsOf] = useState<string | null>(null);
 
   const abortRef = useRef<AbortController | null>(null);
+
+  useEffect(() => {
+    getJobStatus()
+      .then((status) => {
+        const finished = status.market?.finished_at;
+        if (finished) setAsOf(finished.slice(0, 10));
+      })
+      .catch(() => {
+        /* status is optional */
+      });
+  }, []);
 
   // Load metadata on mount
   useEffect(() => {
@@ -137,7 +155,7 @@ export default function Home() {
         setFilterState(buildInitialFilters(fieldsRes.dimensions));
         setTemplates(templatesRes.templates);
       })
-      .catch((e) => setError(`加载筛选字段失败：${e.message}`));
+      .catch((e) => setError(`Failed to load filters: ${e.message}`));
   }, []);
 
   const apiFilters = useMemo(
@@ -170,6 +188,7 @@ export default function Home() {
         .then((res) => {
           setRows(res.data);
           setTotal(res.total);
+          setAsOf(res.data.find((row) => row.market_date)?.market_date ?? null);
           setLoading(false);
         })
         .catch((e) => {
@@ -256,7 +275,7 @@ export default function Home() {
     try {
       await exportCsv({ filters: apiFilters, sortBy, sortOrder });
     } catch (e) {
-      setError(e instanceof Error ? e.message : "导出失败");
+      setError(e instanceof Error ? e.message : "Export failed");
     } finally {
       setExporting(false);
     }
@@ -269,36 +288,80 @@ export default function Home() {
       if (!value.enabled) continue;
       if (value.kind === "range" && !value.min && !value.max) continue;
       if (value.kind === "threshold" && !value.value) continue;
-      chips.push({ key, label: describeFilter(key, value) });
+      const field = dimensions.flatMap((d) => d.fields).find((f) => f.key === key);
+      const name = field ? displayFieldLabel(field) : key;
+      chips.push({ key, label: `${name} ${describeFilter(key, value)}` });
     }
-    if (carbonMode === "true") chips.push({ key: "carbon", label: "仅含碳数据" });
-    if (carbonMode === "false") chips.push({ key: "carbon", label: "仅无碳数据" });
+    if (carbonMode === "true") chips.push({ key: "carbon", label: "With carbon data" });
+    if (carbonMode === "false") chips.push({ key: "carbon", label: "Without carbon data" });
     return chips;
-  }, [filterState, carbonMode]);
+  }, [filterState, carbonMode, dimensions]);
 
   return (
-    <div className="min-h-screen bg-gray-100">
+    <div className="min-h-screen bg-gray-100 dark:bg-gray-950">
       {/* Header */}
-      <header className="border-b border-gray-200 bg-white">
+      <header className="border-b border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
         <div className="mx-auto max-w-7xl px-4 py-4 sm:px-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-emerald-600">
+          <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-3">
+            <div className="flex min-w-0 items-center gap-3">
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-emerald-600 dark:bg-emerald-500">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2">
                   <path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z" />
                   <path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12" />
                 </svg>
               </div>
-              <div>
-                <h1 className="text-lg font-bold text-gray-900">低碳价值筛选器</h1>
-                <p className="text-xs text-gray-500">
-                  Low-Carbon Value Screener · 美股行情 × 碳排放数据
+              <div className="min-w-0">
+                <h1 className="text-lg font-bold text-gray-900 dark:text-gray-100">Low-Carbon Screener</h1>
+                <p className="truncate text-xs text-gray-500 dark:text-gray-400">
+                  US equities × carbon emissions
                 </p>
               </div>
             </div>
-            <div className="hidden text-right text-xs text-gray-400 sm:block">
-              <div>行情数据：TradingView（实时/日更）</div>
-              <div>碳排数据：Bavest（年度披露）</div>
+            <div className="flex flex-wrap items-center gap-2 sm:gap-4">
+              <div className="hidden text-right text-[11px] leading-snug text-gray-400 lg:block dark:text-gray-500">
+                <div>Market: TradingView (price / vol / TTM)</div>
+                <div>Carbon: Clarity AI SFDR{asOf ? ` · ${asOf}` : ""}</div>
+              </div>
+              <button
+                type="button"
+                disabled={syncing}
+                onClick={async () => {
+                  setSyncing(true);
+                  try {
+                    const result = await syncMarket();
+                    if (result.status === "success") {
+                      execute({ page });
+                    } else {
+                      setError(result.message || "Market sync incomplete (using stored snapshot)");
+                    }
+                  } catch (e) {
+                    setError(e instanceof Error ? e.message : "Market sync failed");
+                  } finally {
+                    setSyncing(false);
+                  }
+                }}
+                className="shrink-0 whitespace-nowrap rounded-md border border-emerald-600 px-2.5 py-1 text-xs text-emerald-700 transition hover:bg-emerald-50 disabled:opacity-50 dark:border-emerald-500 dark:text-emerald-400 dark:hover:bg-emerald-950"
+              >
+                {syncing ? "Syncing…" : "Sync"}
+              </button>
+              <div className="flex items-center gap-2 border-l border-gray-200 pl-3 dark:border-gray-700 sm:pl-4">
+                <Link
+                  to="/db"
+                  className="shrink-0 whitespace-nowrap rounded-md border border-gray-300 px-2.5 py-1 text-xs text-gray-600 transition hover:bg-gray-50 dark:border-gray-600 dark:text-gray-400 dark:hover:bg-gray-800"
+                >
+                  Tables
+                </Link>
+                <span className="max-w-[8rem] truncate text-xs font-medium text-gray-700 dark:text-gray-300">
+                  {user?.name}
+                </span>
+                <button
+                  type="button"
+                  onClick={logout}
+                  className="shrink-0 whitespace-nowrap rounded-md border border-gray-300 px-2.5 py-1 text-xs text-gray-600 transition hover:bg-gray-50 dark:border-gray-600 dark:text-gray-400 dark:hover:bg-gray-800"
+                >
+                  Sign out
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -306,7 +369,7 @@ export default function Home() {
 
       <main className="mx-auto max-w-7xl space-y-4 px-4 py-6 sm:px-6">
         {error && (
-          <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600">
+          <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600 dark:border-red-900/60 dark:bg-red-950/40 dark:text-red-400">
             {error}
           </div>
         )}
@@ -336,11 +399,11 @@ export default function Home() {
         {/* Active filter chips */}
         {activeChips.length > 0 && (
           <div className="flex flex-wrap items-center gap-1.5">
-            <span className="text-xs text-gray-400">当前条件：</span>
+            <span className="shrink-0 text-xs text-gray-400 dark:text-gray-500">Filters:</span>
             {activeChips.map((chip, i) => (
               <span
                 key={`${chip.key}-${i}`}
-                className="rounded-full bg-white px-2.5 py-0.5 text-xs text-emerald-700 ring-1 ring-emerald-200"
+                className="rounded-full bg-white px-2.5 py-0.5 text-xs text-emerald-700 ring-1 ring-emerald-200 dark:bg-gray-900 dark:text-emerald-400 dark:ring-emerald-900"
               >
                 {chip.label}
               </span>
@@ -364,8 +427,8 @@ export default function Home() {
           exporting={exporting}
         />
 
-        <footer className="pb-6 pt-2 text-center text-xs text-gray-400">
-          MVP 版本 · 数据仅供研究参考，不构成投资建议
+        <footer className="pb-6 pt-2 text-center text-xs text-gray-400 dark:text-gray-500">
+          MVP · For research only, not investment advice
         </footer>
       </main>
 
