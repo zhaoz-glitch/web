@@ -2,7 +2,7 @@ import { useState, type FormEvent } from "react";
 import type { Route } from "./+types/login";
 import { loginApi } from "~/lib/api";
 import { useAuth } from "~/lib/auth";
-import { Navigate, useNavigate, Link } from "react-router";
+import { Navigate, useNavigate, useLocation, Link } from "react-router";
 
 export function meta({}: Route.MetaArgs) {
   return [
@@ -14,6 +14,7 @@ export function meta({}: Route.MetaArgs) {
 export default function Login() {
   const { user, login } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
 
   // If already logged in, redirect to home
   if (user) {
@@ -24,6 +25,8 @@ export default function Login() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  // Set when we land here after a successful password reset.
+  const resetDone = (location.state as { resetDone?: boolean } | null)?.resetDone;
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -98,12 +101,20 @@ export default function Login() {
             </div>
 
             <div>
-              <label
-                htmlFor="password"
-                className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300"
-              >
-                密码
-              </label>
+              <div className="mb-1 flex items-center justify-between">
+                <label
+                  htmlFor="password"
+                  className="block text-sm font-medium text-gray-700 dark:text-gray-300"
+                >
+                  密码
+                </label>
+                <Link
+                  to="/forgot-password"
+                  className="text-xs font-medium text-emerald-600 hover:text-emerald-700 dark:text-emerald-400 dark:hover:text-emerald-300"
+                >
+                  忘记密码？
+                </Link>
+              </div>
               <input
                 id="password"
                 type="password"
@@ -115,6 +126,12 @@ export default function Login() {
                 placeholder="••••••••"
               />
             </div>
+
+            {resetDone && (
+              <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-700 dark:border-emerald-900/60 dark:bg-emerald-950/40 dark:text-emerald-400">
+                密码已重置，请使用新密码登录
+              </div>
+            )}
 
             {error && (
               <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-600 dark:border-red-900/60 dark:bg-red-950/40 dark:text-red-400">
@@ -156,16 +173,6 @@ export default function Login() {
               )}
             </button>
           </form>
-
-          {/* Demo credentials hint */}
-          <div className="mt-4 border-t border-gray-100 pt-3 text-xs text-gray-400 dark:border-gray-800 dark:text-gray-500">
-            <p>
-              演示账号：<code className="text-gray-600 dark:text-gray-400">demo@lowcarbon.io</code>
-            </p>
-            <p>
-              密码：<code className="text-gray-600 dark:text-gray-400">demo123456</code>
-            </p>
-          </div>
 
           {/* Link to register */}
           <div className="mt-2 text-center text-xs text-gray-400 dark:text-gray-500">

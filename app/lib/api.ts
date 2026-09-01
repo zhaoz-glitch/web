@@ -150,6 +150,38 @@ export async function registerApi(
   return body as LoginResponse;
 }
 
+/** POST /api/auth/forgot-password — sends a 6-digit reset code to the email. */
+export async function forgotPasswordApi(email: string): Promise<string> {
+  const res = await fetch(`${API_BASE}/api/auth/forgot-password`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email }),
+  });
+  const body = await res.json();
+  if (!res.ok) {
+    throw new Error(body?.error || "发送失败");
+  }
+  return body?.message || "验证码已发送到你的邮箱";
+}
+
+/** POST /api/auth/reset-password — redeems the code and sets a new password. */
+export async function resetPasswordApi(
+  email: string,
+  code: string,
+  password: string,
+): Promise<string> {
+  const res = await fetch(`${API_BASE}/api/auth/reset-password`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email, code, password }),
+  });
+  const body = await res.json();
+  if (!res.ok) {
+    throw new Error(body?.error || "重置失败");
+  }
+  return body?.message || "密码已重置";
+}
+
 // ----------------------------------------------------------------------- //
 //  DB Workbench API
 // ----------------------------------------------------------------------- //
