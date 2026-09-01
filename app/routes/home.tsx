@@ -7,6 +7,7 @@ import { TemplateSelector } from "~/components/TemplateSelector";
 import { FilterPanel, describeFilter } from "~/components/FilterPanel";
 import { ResultsTable, type SortKey } from "~/components/ResultsTable";
 import { StockDrawer } from "~/components/StockDrawer";
+import { displayFieldLabel } from "~/lib/labels";
 import type {
   CarbonDataMode,
   Dimension,
@@ -96,10 +97,10 @@ function templateToState(
 
 export function meta({}: Route.MetaArgs) {
   return [
-    { title: "低碳价值筛选器 | Low-Carbon Value Screener" },
+    { title: "Low-Carbon Value Screener" },
     {
       name: "description",
-      content: "整合美股实时行情与年度碳排放数据的绿色选股工具",
+      content: "Screen US equities with live market data and annual carbon emissions.",
     },
   ];
 }
@@ -141,7 +142,7 @@ export default function Home() {
         setFilterState(buildInitialFilters(fieldsRes.dimensions));
         setTemplates(templatesRes.templates);
       })
-      .catch((e) => setError(`加载筛选字段失败：${e.message}`));
+      .catch((e) => setError(`Failed to load filters: ${e.message}`));
   }, []);
 
   const apiFilters = useMemo(
@@ -260,7 +261,7 @@ export default function Home() {
     try {
       await exportCsv({ filters: apiFilters, sortBy, sortOrder });
     } catch (e) {
-      setError(e instanceof Error ? e.message : "导出失败");
+      setError(e instanceof Error ? e.message : "Export failed");
     } finally {
       setExporting(false);
     }
@@ -273,12 +274,14 @@ export default function Home() {
       if (!value.enabled) continue;
       if (value.kind === "range" && !value.min && !value.max) continue;
       if (value.kind === "threshold" && !value.value) continue;
-      chips.push({ key, label: describeFilter(key, value) });
+      const field = dimensions.flatMap((d) => d.fields).find((f) => f.key === key);
+      const name = field ? displayFieldLabel(field) : key;
+      chips.push({ key, label: `${name} ${describeFilter(key, value)}` });
     }
-    if (carbonMode === "true") chips.push({ key: "carbon", label: "仅含碳数据" });
-    if (carbonMode === "false") chips.push({ key: "carbon", label: "仅无碳数据" });
+    if (carbonMode === "true") chips.push({ key: "carbon", label: "With carbon data" });
+    if (carbonMode === "false") chips.push({ key: "carbon", label: "Without carbon data" });
     return chips;
-  }, [filterState, carbonMode]);
+  }, [filterState, carbonMode, dimensions]);
 
   return (
     <div className="min-h-screen bg-gray-100 dark:bg-gray-950">
@@ -313,10 +316,10 @@ export default function Home() {
               </div>
               <div>
                 <h1 className="text-xl font-bold tracking-tight text-white">
-                  低碳价值筛选器
+                  Low-Carbon Screener
                 </h1>
                 <p className="text-xs font-medium text-emerald-50/80 dark:text-emerald-100/70">
-                  Low-Carbon Value Screener · 美股行情 × 碳排放数据
+                  US equities × carbon emissions
                 </p>
               </div>
             </div>
@@ -324,11 +327,11 @@ export default function Home() {
               <div className="hidden flex-col items-end gap-1.5 sm:flex">
                 <span className="inline-flex items-center gap-1.5 rounded-full bg-white/12 px-2.5 py-1 text-[11px] font-medium text-white ring-1 ring-white/20 backdrop-blur-sm">
                   <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-lime-300" />
-                  行情数据 · TradingView 实时
+                  Market · TradingView live
                 </span>
                 <span className="inline-flex items-center gap-1.5 rounded-full bg-white/12 px-2.5 py-1 text-[11px] font-medium text-white ring-1 ring-white/20 backdrop-blur-sm">
                   <span className="h-1.5 w-1.5 rounded-full bg-teal-200" />
-                  碳排数据 · Bavest 年度披露
+                  Carbon · Bavest annual
                 </span>
               </div>
               <div className="flex items-center gap-2 border-l border-white/20 pl-4">
@@ -336,7 +339,7 @@ export default function Home() {
                   to="/db"
                   className="rounded-md bg-white/10 px-2.5 py-1 text-xs font-medium text-white ring-1 ring-white/25 transition hover:bg-white/20 dark:hover:bg-white/15"
                 >
-                  数据表
+                  Tables
                 </Link>
                 <span className="text-xs font-medium text-white/90">
                   {user?.name}
@@ -346,7 +349,7 @@ export default function Home() {
                   onClick={logout}
                   className="rounded-md bg-white/10 px-2.5 py-1 text-xs font-medium text-white ring-1 ring-white/25 transition hover:bg-white/20 dark:hover:bg-white/15"
                 >
-                  退出
+                  Sign out
                 </button>
               </div>
             </div>
@@ -386,7 +389,7 @@ export default function Home() {
         {/* Active filter chips */}
         {activeChips.length > 0 && (
           <div className="flex flex-wrap items-center gap-1.5">
-            <span className="text-xs text-gray-400 dark:text-gray-500">当前条件：</span>
+            <span className="shrink-0 text-xs text-gray-400 dark:text-gray-500">Filters:</span>
             {activeChips.map((chip, i) => (
               <span
                 key={`${chip.key}-${i}`}
@@ -415,7 +418,7 @@ export default function Home() {
         />
 
         <footer className="pb-6 pt-2 text-center text-xs text-gray-400 dark:text-gray-500">
-          MVP 版本 · 数据仅供研究参考，不构成投资建议
+          MVP · For research only, not investment advice
         </footer>
       </main>
 
