@@ -90,9 +90,9 @@ export function ResultsTable({
   ];
 
   return (
-    <div className="rounded-xl border border-gray-200 bg-white shadow-sm dark:border-gray-800 dark:bg-gray-900">
+    <div className="rounded-xl border border-gray-200 bg-white shadow-sm dark:border-emerald-900/30 dark:bg-[#0f1c18]">
       {/* Toolbar */}
-      <div className="flex items-center justify-between border-b border-gray-100 px-4 py-3 dark:border-gray-800">
+      <div className="flex items-center justify-between border-b border-gray-100 px-4 py-3 dark:border-emerald-900/20">
         <span className="min-w-0 text-sm font-semibold text-gray-900 dark:text-gray-100">
           Results
           <span className="ml-2 text-xs font-normal text-gray-500 dark:text-gray-400">
@@ -113,7 +113,7 @@ export function ResultsTable({
       <div className="overflow-x-auto">
         <table className="w-full min-w-[900px] text-sm">
           <thead>
-            <tr className="border-b border-gray-100 bg-gray-50/70 text-xs text-gray-500 dark:border-gray-800 dark:bg-gray-800/50 dark:text-gray-400">
+            <tr className="border-b border-gray-100 bg-gray-50/70 text-xs text-gray-500 dark:border-emerald-900/20 dark:bg-emerald-950/10 dark:text-gray-400">
               {columns.map((col) => (
                 <th
                   key={col.label}
@@ -135,10 +135,10 @@ export function ResultsTable({
           <tbody>
             {loading ? (
               Array.from({ length: 5 }).map((_, i) => (
-                <tr key={i} className="border-b border-gray-50 dark:border-gray-800/60">
+                <tr key={i} className="border-b border-gray-50 dark:border-emerald-900/15">
                   {columns.map((c) => (
                     <td key={c.label} className="px-3 py-3">
-                      <div className="h-4 animate-pulse rounded bg-gray-100 dark:bg-gray-800" />
+                      <div className="h-4 animate-pulse rounded bg-gray-100 dark:bg-emerald-950/20" />
                     </td>
                   ))}
                 </tr>
@@ -166,7 +166,7 @@ export function ResultsTable({
                     </div>
                   </td>
                   <td className="px-3 py-2.5">
-                    <span className="rounded bg-gray-100 px-1.5 py-0.5 text-xs text-gray-600 dark:bg-gray-800 dark:text-gray-300">
+                    <span className="rounded bg-gray-100 px-1.5 py-0.5 text-xs text-gray-600 dark:bg-emerald-950/20 dark:text-gray-300">
                       {row.sector}
                     </span>
                   </td>
@@ -204,7 +204,7 @@ export function ResultsTable({
       </div>
 
       {/* Pagination */}
-      <div className="flex items-center justify-between border-t border-gray-100 px-4 py-3 dark:border-gray-800">
+      <div className="flex items-center justify-between border-t border-gray-100 px-4 py-3 dark:border-emerald-900/20">
         <span className="text-xs text-gray-500 dark:text-gray-400">
           Page {page} / {totalPages}
         </span>
@@ -213,7 +213,7 @@ export function ResultsTable({
             type="button"
             disabled={page <= 1}
             onClick={() => onPageChange(page - 1)}
-            className="whitespace-nowrap rounded border border-gray-300 px-2.5 py-1 text-xs text-gray-600 hover:bg-gray-50 disabled:opacity-40 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
+            className="whitespace-nowrap rounded border border-gray-300 px-2.5 py-1 text-xs text-gray-600 hover:bg-gray-50 disabled:opacity-40 dark:border-emerald-900/30 dark:text-gray-300 dark:hover:bg-emerald-950/20"
           >
             Prev
           </button>
@@ -221,7 +221,7 @@ export function ResultsTable({
             type="button"
             disabled={page >= totalPages}
             onClick={() => onPageChange(page + 1)}
-            className="whitespace-nowrap rounded border border-gray-300 px-2.5 py-1 text-xs text-gray-600 hover:bg-gray-50 disabled:opacity-40 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
+            className="whitespace-nowrap rounded border border-gray-300 px-2.5 py-1 text-xs text-gray-600 hover:bg-gray-50 disabled:opacity-40 dark:border-emerald-900/30 dark:text-gray-300 dark:hover:bg-emerald-950/20"
           >
             Next
           </button>

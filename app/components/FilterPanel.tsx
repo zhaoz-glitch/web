@@ -44,14 +44,14 @@ export function FilterPanel({
   running,
 }: Props) {
   return (
-    <div className="rounded-xl border border-gray-200 bg-white shadow-sm dark:border-gray-800 dark:bg-gray-900">
-      <div className="flex items-center justify-between border-b border-gray-100 px-4 py-3 dark:border-gray-800">
+    <div className="rounded-xl border border-gray-200 bg-white shadow-sm dark:border-emerald-900/30 dark:bg-[#0f1c18]">
+      <div className="flex items-center justify-between border-b border-gray-100 px-4 py-3 dark:border-emerald-900/20">
         <span className="text-sm font-semibold text-gray-900 dark:text-gray-100">Custom Filters</span>
         <div className="flex shrink-0 gap-2">
           <button
             type="button"
             onClick={onReset}
-            className="whitespace-nowrap rounded-md border border-gray-300 px-3 py-1.5 text-xs text-gray-600 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-800"
+            className="whitespace-nowrap rounded-md border border-gray-300 px-3 py-1.5 text-xs text-gray-600 hover:bg-gray-50 dark:border-emerald-900/30 dark:text-gray-400 dark:hover:bg-emerald-950/20"
           >
             Reset
           </button>
@@ -101,7 +101,7 @@ export function FilterPanel({
                     className={`rounded-lg border p-2.5 transition ${
                       checked
                         ? "border-emerald-400 bg-emerald-50/30 dark:border-emerald-500/60 dark:bg-emerald-950/20"
-                        : "border-gray-200 dark:border-gray-700"
+                        : "border-gray-200 dark:border-emerald-900/25"
                     }`}
                   >
                     <label className="flex items-center gap-2 text-xs">
@@ -139,7 +139,7 @@ export function FilterPanel({
                                 min: e.target.value,
                               })
                             }
-                            className="block h-8 w-full rounded border border-gray-300 bg-white px-2 text-xs text-gray-900 placeholder-gray-400 focus:border-emerald-500 focus:outline-none dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 dark:placeholder-gray-500 dark:focus:border-emerald-400"
+                            className="block h-8 w-full rounded border border-gray-300 bg-white px-2 text-xs text-gray-900 placeholder-gray-400 focus:border-emerald-500 focus:outline-none dark:border-emerald-900/40 dark:bg-[#141f1c] dark:text-gray-100 dark:placeholder-gray-500 dark:focus:border-emerald-400"
                           />
                           <span className="block text-center text-[10px] text-gray-400 dark:text-gray-500">~</span>
                           <input
@@ -154,7 +154,7 @@ export function FilterPanel({
                                 max: e.target.value,
                               })
                             }
-                            className="block h-8 w-full rounded border border-gray-300 bg-white px-2 text-xs text-gray-900 placeholder-gray-400 focus:border-emerald-500 focus:outline-none dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 dark:placeholder-gray-500 dark:focus:border-emerald-400"
+                            className="block h-8 w-full rounded border border-gray-300 bg-white px-2 text-xs text-gray-900 placeholder-gray-400 focus:border-emerald-500 focus:outline-none dark:border-emerald-900/40 dark:bg-[#141f1c] dark:text-gray-100 dark:placeholder-gray-500 dark:focus:border-emerald-400"
                           />
                         </div>
                       ) : (
@@ -167,7 +167,7 @@ export function FilterPanel({
                                 op: e.target.value,
                               })
                             }
-                            className="block h-8 w-full rounded border border-gray-300 bg-white px-1 text-xs font-medium text-gray-900 focus:border-emerald-500 focus:outline-none dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 dark:focus:border-emerald-400"
+                            className="block h-8 w-full rounded border border-gray-300 bg-white px-1 text-xs font-medium text-gray-900 focus:border-emerald-500 focus:outline-none dark:border-emerald-900/40 dark:bg-[#141f1c] dark:text-gray-100 dark:focus:border-emerald-400"
                             aria-label="Operator"
                           >
                             {(field.ops ?? [">", "<", ">=", "<="]).map((op) => (
@@ -188,7 +188,7 @@ export function FilterPanel({
                                 value: e.target.value,
                               })
                             }
-                            className="block h-8 w-full rounded border border-gray-300 bg-white px-2 text-xs text-gray-900 placeholder-gray-400 focus:border-emerald-500 focus:outline-none dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 dark:placeholder-gray-500 dark:focus:border-emerald-400"
+                            className="block h-8 w-full rounded border border-gray-300 bg-white px-2 text-xs text-gray-900 placeholder-gray-400 focus:border-emerald-500 focus:outline-none dark:border-emerald-900/40 dark:bg-[#141f1c] dark:text-gray-100 dark:placeholder-gray-500 dark:focus:border-emerald-400"
                           />
                         </div>
                       )
@@ -202,7 +202,7 @@ export function FilterPanel({
         })}
 
         {/* Carbon data availability filter */}
-        <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 rounded-lg border border-gray-200 bg-gray-50 p-2.5 dark:border-gray-800 dark:bg-gray-800/50">
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 rounded-lg border border-gray-200 bg-gray-50 p-2.5 dark:border-emerald-900/20 dark:bg-emerald-950/10">
           <span className="shrink-0 text-xs font-medium text-gray-700 dark:text-gray-300">Carbon data:</span>
           {(
             [

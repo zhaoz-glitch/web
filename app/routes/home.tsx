@@ -284,7 +284,7 @@ export default function Home() {
   }, [filterState, carbonMode, dimensions]);
 
   return (
-    <div className="min-h-screen bg-gray-100 dark:bg-gray-950">
+    <div className="min-h-screen bg-gray-50 dark:bg-[#0a1512]">
       {/* Header */}
       <header className="relative overflow-hidden border-b border-emerald-700/30 bg-gradient-to-br from-emerald-600 via-teal-600 to-cyan-700 dark:border-emerald-900/50 dark:from-emerald-900 dark:via-teal-900 dark:to-cyan-950">
         {/* Decorative leaf silhouettes */}
@@ -393,7 +393,7 @@ export default function Home() {
             {activeChips.map((chip, i) => (
               <span
                 key={`${chip.key}-${i}`}
-                className="rounded-full bg-white px-2.5 py-0.5 text-xs text-emerald-700 ring-1 ring-emerald-200 dark:bg-gray-900 dark:text-emerald-400 dark:ring-emerald-900"
+                className="rounded-full bg-white px-2.5 py-0.5 text-xs text-emerald-700 ring-1 ring-emerald-200 dark:bg-[#0f1c18] dark:text-emerald-400 dark:ring-emerald-900/40"
               >
                 {chip.label}
               </span>
