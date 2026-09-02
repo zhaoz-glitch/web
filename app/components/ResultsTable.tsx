@@ -2,9 +2,12 @@ import { useEffect, useState } from "react";
 import type { ScreenerRow } from "~/types";
 
 export type SortKey =
+  | "symbol"
+  | "sector"
   | "market_cap_basic"
   | "close"
   | "price_earnings_ttm"
+  | "price_book_value"
   | "turnover"
   | "dividend_yield_recent"
   | "carbon_intensity_revenue"
@@ -87,17 +90,27 @@ export function ResultsTable({
     setJumpValue(String(clamped));
   };
 
-  const columns: { key: SortKey | null; label: string; align?: string }[] = [
-    { key: null, label: "Symbol" },
-    { key: null, label: "Sector" },
+  const columns: { key: SortKey | null; label: string }[] = [
+    { key: "symbol", label: "Symbol" },
+    { key: "sector", label: "Sector" },
     { key: "close", label: "Price" },
     { key: "market_cap_basic", label: "Mkt Cap" },
     { key: "price_earnings_ttm", label: "PE (TTM)" },
-    { key: null, label: "PB" },
+    { key: "price_book_value", label: "PB" },
     { key: "dividend_yield_recent", label: "Yield" },
     { key: "carbon_intensity_revenue", label: "Intensity" },
     { key: "total_emissions", label: "Emissions" },
     { key: "carbon_change_yoy", label: "Carbon YoY" },
+  ];
+
+  const numericKeys: SortKey[] = [
+    "close",
+    "market_cap_basic",
+    "price_earnings_ttm",
+    "price_book_value",
+    "dividend_yield_recent",
+    "carbon_intensity_revenue",
+    "total_emissions",
   ];
 
   return (
@@ -130,7 +143,7 @@ export function ResultsTable({
                   key={col.label}
                   className={`whitespace-nowrap px-3 py-2.5 font-medium ${
                     col.key ? "cursor-pointer select-none hover:text-gray-900 dark:hover:text-gray-100" : ""
-                  } ${col.key === "close" || col.key === "market_cap_basic" ? "text-right" : "text-left"}`}
+                  } ${col.key && numericKeys.includes(col.key) ? "text-right" : "text-left"}`}
                   onClick={col.key ? () => onSort(col.key!) : undefined}
                 >
                   {col.label}
