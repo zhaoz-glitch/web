@@ -72,11 +72,23 @@ export function runScreener(
   });
 }
 
+/** Encode a stock symbol for URL paths.
+ *
+ * Some symbols contain a slash (e.g. "BML/PJ"). A single `encodeURIComponent`
+ * produces `%2F`, but upstream proxies decode `%2F` back into a real `/`, which
+ * then looks like a path separator to Flask and causes a 404. Double-encoding
+ * keeps the slash encoded all the way into the Flask route, where the backend
+ * decodes it once with `urllib.parse.unquote`.
+ */
+function encodeSymbol(symbol: string): string {
+  return encodeURIComponent(encodeURIComponent(symbol));
+}
+
 export function getStockDetail(
   symbol: string,
   signal?: AbortSignal,
 ): Promise<StockDetail> {
-  return request<StockDetail>(`/api/stock/${encodeURIComponent(symbol)}`, {
+  return request<StockDetail>(`/api/stock/${encodeSymbol(symbol)}`, {
     signal,
   });
 }
@@ -84,7 +96,7 @@ export function getStockDetail(
 export function getCarbonTrend(
   symbol: string,
 ): Promise<{ symbol: string; name: string; trend: CarbonTrendPoint[] }> {
-  return request(`/api/stock/${encodeURIComponent(symbol)}/carbon-trend`);
+  return request(`/api/stock/${encodeSymbol(symbol)}/carbon-trend`);
 }
 
 /** POST /api/screener/export and trigger a CSV file download. */
