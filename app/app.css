@@ -27,6 +27,16 @@ body {
   @apply block h-11 w-full rounded-2xl border border-ink-200 bg-white/80 px-4 text-sm text-ink-900 placeholder:text-ink-400 shadow-sm outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/20;
 }
 
+/* Override browser autofill background in both light and dark mode */
+.glass-input:-webkit-autofill,
+.glass-input:-webkit-autofill:hover,
+.glass-input:-webkit-autofill:focus,
+.glass-input:-webkit-autofill:active {
+  -webkit-box-shadow: 0 0 0 1000px color-mix(in oklab, var(--color-white) 80%, transparent) inset !important;
+  -webkit-text-fill-color: var(--color-ink-900) !important;
+  caret-color: var(--color-ink-900);
+}
+
 .btn-primary {
   @apply flex h-11 items-center justify-center rounded-2xl bg-accent px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60;
 }
