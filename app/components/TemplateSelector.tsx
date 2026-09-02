@@ -3,11 +3,11 @@ import type { Template } from "~/types";
 
 interface Props {
   templates: Template[];
-  activeTemplateId: number | null;
-  onSelect: (template: Template) => void;
+  activeTemplateIds: number[];
+  onToggle: (template: Template) => void;
 }
 
-export function TemplateSelector({ templates, activeTemplateId, onSelect }: Props) {
+export function TemplateSelector({ templates, activeTemplateIds, onToggle }: Props) {
   if (templates.length === 0) return null;
 
   return (
@@ -18,13 +18,13 @@ export function TemplateSelector({ templates, activeTemplateId, onSelect }: Prop
       </div>
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
         {templates.map((tpl) => {
-          const active = activeTemplateId === tpl.id;
+          const active = activeTemplateIds.includes(tpl.id);
           const copy = displayTemplate(tpl);
           return (
             <button
               key={tpl.id}
               type="button"
-              onClick={() => onSelect(tpl)}
+              onClick={() => onToggle(tpl)}
               className={`rounded-lg border p-3 text-left transition ${
                 active
                   ? "border-emerald-500 bg-emerald-50 ring-2 ring-emerald-500/30 dark:border-emerald-400 dark:bg-emerald-950/30 dark:ring-emerald-400/20"

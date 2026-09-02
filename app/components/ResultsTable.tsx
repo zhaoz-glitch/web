@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import type { ScreenerRow } from "~/types";
 
 export type SortKey =
@@ -75,6 +76,16 @@ export function ResultsTable({
   exporting,
 }: Props) {
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
+  const [jumpValue, setJumpValue] = useState(String(page));
+  useEffect(() => setJumpValue(String(page)), [page]);
+
+  const submitJump = () => {
+    const n = parseInt(jumpValue, 10);
+    if (!Number.isFinite(n)) { setJumpValue(String(page)); return; }
+    const clamped = Math.min(Math.max(1, n), totalPages);
+    if (clamped !== page) onPageChange(clamped);
+    setJumpValue(String(clamped));
+  };
 
   const columns: { key: SortKey | null; label: string; align?: string }[] = [
     { key: null, label: "Symbol" },
@@ -205,8 +216,24 @@ export function ResultsTable({
 
       {/* Pagination */}
       <div className="flex items-center justify-between border-t border-gray-100 px-4 py-3 dark:border-emerald-900/20">
-        <span className="text-xs text-gray-500 dark:text-gray-400">
-          Page {page} / {totalPages}
+        <span className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
+          Page
+          <input
+            type="number"
+            min={1}
+            max={totalPages}
+            value={jumpValue}
+            onChange={(e) => setJumpValue(e.target.value)}
+            onBlur={submitJump}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") { e.preventDefault(); submitJump(); (e.target as HTMLInputElement).blur(); }
+              if (e.key === "Escape") { setJumpValue(String(page)); (e.target as HTMLInputElement).blur(); }
+            }}
+            disabled={totalPages <= 1}
+            aria-label="Jump to page"
+            className="w-14 rounded border border-gray-300 px-2 py-1 text-center text-xs tabular-nums text-gray-700 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 disabled:opacity-40 dark:border-emerald-900/30 dark:bg-emerald-950/20 dark:text-gray-200"
+          />
+          / {totalPages}
         </span>
         <div className="flex gap-1">
           <button

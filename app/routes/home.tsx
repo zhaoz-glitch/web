@@ -64,10 +64,53 @@ function templateToState(
   template: Template,
   dimensions: Dimension[],
 ): { state: FilterState; carbonMode: CarbonDataMode } {
+  return filtersToState(template.filters, dimensions);
+}
+
+/** Merge filters from multiple templates (intersection for ranges). */
+function mergeTemplateFilters(templates: Template[]): Record<string, FilterCondition | string> {
+  const merged: Record<string, FilterCondition | string> = {};
+  for (const tpl of templates) {
+    for (const [key, raw] of Object.entries(tpl.filters)) {
+      if (key === "has_carbon_data") {
+        merged[key] = raw;
+        continue;
+      }
+      if (merged[key] == null) {
+        merged[key] = raw;
+      } else if (
+        typeof merged[key] === "object" && merged[key] !== null &&
+        typeof raw === "object" && raw !== null
+      ) {
+        const existing = merged[key] as FilterCondition;
+        const incoming = raw as FilterCondition;
+        const result: FilterCondition = {};
+        if (existing.min != null || incoming.min != null) {
+          result.min = existing.min != null && incoming.min != null
+            ? Math.max(existing.min, incoming.min)
+            : (existing.min ?? incoming.min);
+        }
+        if (existing.max != null || incoming.max != null) {
+          result.max = existing.max != null && incoming.max != null
+            ? Math.min(existing.max, incoming.max)
+            : (existing.max ?? incoming.max);
+        }
+        merged[key] = result;
+      }
+    }
+  }
+  return merged;
+}
+
+/** Convert API-format filters into UI state. */
+function filtersToState(
+  filters: Record<string, FilterCondition | string>,
+  dimensions: Dimension[],
+): { state: FilterState; carbonMode: CarbonDataMode } {
   const state = buildInitialFilters(dimensions);
   let carbonMode: CarbonDataMode = "all";
 
-  for (const [key, raw] of Object.entries(template.filters)) {
+  for (const [key, raw] of Object.entries(filters)) {
     if (key === "has_carbon_data") {
       carbonMode = raw === "true" || raw === "false" ? raw : "all";
       continue;
@@ -113,7 +156,7 @@ export default function Home() {
   // Metadata
   const [dimensions, setDimensions] = useState<Dimension[]>([]);
   const [templates, setTemplates] = useState<Template[]>([]);
-  const [activeTemplateId, setActiveTemplateId] = useState<number | null>(null);
+  const [activeTemplateIds, setActiveTemplateIds] = useState<number[]>([]);
 
   // Filter state
   const [filterState, setFilterState] = useState<FilterState>({});
@@ -197,20 +240,33 @@ export default function Home() {
 
   const handleFilterChange = (key: string, value: FilterValue) => {
     setFilterState((prev) => ({ ...prev, [key]: value }));
-    setActiveTemplateId(null);
+    setActiveTemplateIds([]);
   };
 
   const handleReset = () => {
     setFilterState(buildInitialFilters(dimensions));
     setCarbonMode("true");
-    setActiveTemplateId(null);
+    setActiveTemplateIds([]);
   };
 
-  const handleTemplateSelect = (template: Template) => {
-    const { state, carbonMode: mode } = templateToState(template, dimensions);
-    setFilterState(state);
-    setCarbonMode(mode);
-    setActiveTemplateId(template.id);
+  const handleTemplateToggle = (template: Template) => {
+    setActiveTemplateIds((prev) => {
+      const exists = prev.includes(template.id);
+      const next = exists ? prev.filter((id) => id !== template.id) : [...prev, template.id];
+
+      if (next.length === 0) {
+        setFilterState(buildInitialFilters(dimensions));
+        setCarbonMode("true");
+      } else {
+        const selectedTemplates = templates.filter((t) => next.includes(t.id));
+        const mergedFilters = mergeTemplateFilters(selectedTemplates);
+        const { state, carbonMode: mode } = filtersToState(mergedFilters, dimensions);
+        setFilterState(state);
+        setCarbonMode(mode);
+      }
+
+      return next;
+    });
   };
 
   const handleSort = (key: SortKey) => {
@@ -367,8 +423,8 @@ export default function Home() {
         {/* Preset templates */}
         <TemplateSelector
           templates={templates}
-          activeTemplateId={activeTemplateId}
-          onSelect={handleTemplateSelect}
+          activeTemplateIds={activeTemplateIds}
+          onToggle={handleTemplateToggle}
         />
 
         {/* Custom filters */}
@@ -379,7 +435,7 @@ export default function Home() {
           onFilterChange={handleFilterChange}
           onCarbonModeChange={(mode) => {
             setCarbonMode(mode);
-            setActiveTemplateId(null);
+            setActiveTemplateIds([]);
           }}
           onReset={handleReset}
           onRun={() => execute()}
