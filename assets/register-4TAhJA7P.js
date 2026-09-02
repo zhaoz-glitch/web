@@ -1,0 +1,1 @@
+import{n as e,s as t,t as n}from"./jsx-runtime-DpVyP0B1.js";var r=n();function i(){return[{title:`Sign up · Low-Carbon Value Screener`}]}var a=t(function(){return(0,r.jsx)(e,{to:`/login?tab=signup`,replace:!0})});export{a as default,i as meta};
