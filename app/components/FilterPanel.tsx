@@ -5,6 +5,7 @@ interface Props {
   dimensions: Dimension[];
   filterState: FilterState;
   carbonMode: CarbonDataMode;
+  errors?: Record<string, string>;
   onFilterChange: (key: string, value: FilterValue) => void;
   onCarbonModeChange: (mode: CarbonDataMode) => void;
   onReset: () => void;
@@ -33,10 +34,20 @@ export function describeFilter(key: string, value: FilterValue): string {
   return `${opLabel[value.op] ?? value.op} ${value.value ?? ""}`;
 }
 
+const inputBaseClass =
+  "block h-8 w-full rounded border bg-white px-2 text-xs text-gray-900 placeholder-gray-400 focus:outline-none dark:bg-[#141f1c] dark:text-gray-100 dark:placeholder-gray-500";
+
+const inputNormalClass =
+  "border-gray-300 focus:border-emerald-500 dark:border-emerald-900/40 dark:focus:border-emerald-400";
+
+const inputErrorClass =
+  "border-red-400 focus:border-red-500 dark:border-red-900/60 dark:focus:border-red-400";
+
 export function FilterPanel({
   dimensions,
   filterState,
   carbonMode,
+  errors = {},
   onFilterChange,
   onCarbonModeChange,
   onReset,
@@ -94,14 +105,18 @@ export function FilterPanel({
                 const value = filterState[field.key];
                 if (!value) return null;
                 const checked = value.enabled;
+                const fieldError = errors[field.key];
+                const borderClass = fieldError
+                  ? "border-red-400 dark:border-red-900/60"
+                  : checked
+                    ? "border-emerald-400 dark:border-emerald-500/60"
+                    : "border-gray-200 dark:border-emerald-900/25";
 
                 return (
                   <div
                     key={field.key}
-                    className={`rounded-lg border p-2.5 transition ${
-                      checked
-                        ? "border-emerald-400 bg-emerald-50/30 dark:border-emerald-500/60 dark:bg-emerald-950/20"
-                        : "border-gray-200 dark:border-emerald-900/25"
+                    className={`rounded-lg border p-2.5 transition ${borderClass} ${
+                      checked && !fieldError ? "bg-emerald-50/30 dark:bg-emerald-950/20" : ""
                     }`}
                   >
                     <label className="flex items-center gap-2 text-xs">
@@ -139,7 +154,7 @@ export function FilterPanel({
                                 min: e.target.value,
                               })
                             }
-                            className="block h-8 w-full rounded border border-gray-300 bg-white px-2 text-xs text-gray-900 placeholder-gray-400 focus:border-emerald-500 focus:outline-none dark:border-emerald-900/40 dark:bg-[#141f1c] dark:text-gray-100 dark:placeholder-gray-500 dark:focus:border-emerald-400"
+                            className={`${inputBaseClass} ${fieldError ? inputErrorClass : inputNormalClass}`}
                           />
                           <span className="block text-center text-[10px] text-gray-400 dark:text-gray-500">~</span>
                           <input
@@ -154,8 +169,13 @@ export function FilterPanel({
                                 max: e.target.value,
                               })
                             }
-                            className="block h-8 w-full rounded border border-gray-300 bg-white px-2 text-xs text-gray-900 placeholder-gray-400 focus:border-emerald-500 focus:outline-none dark:border-emerald-900/40 dark:bg-[#141f1c] dark:text-gray-100 dark:placeholder-gray-500 dark:focus:border-emerald-400"
+                            className={`${inputBaseClass} ${fieldError ? inputErrorClass : inputNormalClass}`}
                           />
+                          {fieldError && (
+                            <div className="col-span-3 text-[10px] text-red-500 dark:text-red-400">
+                              {fieldError}
+                            </div>
+                          )}
                         </div>
                       ) : (
                         <div className="mt-2 grid grid-cols-[3.5rem_1fr] items-center gap-1.5">
@@ -188,8 +208,13 @@ export function FilterPanel({
                                 value: e.target.value,
                               })
                             }
-                            className="block h-8 w-full rounded border border-gray-300 bg-white px-2 text-xs text-gray-900 placeholder-gray-400 focus:border-emerald-500 focus:outline-none dark:border-emerald-900/40 dark:bg-[#141f1c] dark:text-gray-100 dark:placeholder-gray-500 dark:focus:border-emerald-400"
+                            className={`${inputBaseClass} ${fieldError ? inputErrorClass : inputNormalClass}`}
                           />
+                          {fieldError && (
+                            <div className="col-span-2 text-[10px] text-red-500 dark:text-red-400">
+                              {fieldError}
+                            </div>
+                          )}
                         </div>
                       )
                     )}

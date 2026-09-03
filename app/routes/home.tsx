@@ -8,9 +8,11 @@ import { FilterPanel, describeFilter } from "~/components/FilterPanel";
 import { ResultsTable, type SortKey } from "~/components/ResultsTable";
 import { StockDrawer } from "~/components/StockDrawer";
 import { displayFieldLabel } from "~/lib/labels";
+import { parseNumericInput } from "~/lib/numbers";
 import type {
   CarbonDataMode,
   Dimension,
+  FieldMeta,
   FilterCondition,
   FilterState,
   FilterValue,
@@ -33,30 +35,70 @@ function buildInitialFilters(dimensions: Dimension[]): FilterState {
   return state;
 }
 
-/** Convert UI filter state into the API request filter dict. */
+interface ApiFiltersResult {
+  filters: Record<string, FilterCondition | string>;
+  errors: Record<string, string>;
+}
+
+/** Build a map from field key to its metadata. */
+function buildFieldMeta(dimensions: Dimension[]): Record<string, FieldMeta> {
+  const map: Record<string, FieldMeta> = {};
+  for (const dim of dimensions) {
+    for (const field of dim.fields) {
+      map[field.key] = field;
+    }
+  }
+  return map;
+}
+
+/** Convert UI filter state into the API request filter dict.
+ *
+ * Percentage inputs are normalized: "10%" -> 10, "0.1" -> 0.1.  Invalid
+ * strings like "abc" are collected as errors instead of being silently
+ * dropped.
+ */
 function toApiFilters(
   filterState: FilterState,
   carbonMode: CarbonDataMode,
-): Record<string, FilterCondition | string> {
+  fieldMeta: Record<string, FieldMeta>,
+): ApiFiltersResult {
   const result: Record<string, FilterCondition | string> = {};
+  const errors: Record<string, string> = {};
+
   for (const [key, value] of Object.entries(filterState)) {
     if (!value.enabled) continue;
+    const meta = fieldMeta[key];
+    const unit = meta?.unit;
+
     if (value.kind === "range") {
       const cond: FilterCondition = {};
-      if (value.min !== "" && value.min != null) cond.min = Number(value.min);
-      if (value.max !== "" && value.max != null) cond.max = Number(value.max);
+      if (value.min !== "" && value.min != null) {
+        const parsed = parseNumericInput(value.min, unit);
+        if (parsed.error) errors[key] = parsed.error;
+        else cond.min = parsed.value ?? undefined;
+      }
+      if (value.max !== "" && value.max != null) {
+        const parsed = parseNumericInput(value.max, unit);
+        if (parsed.error) {
+          errors[key] = errors[key] ? `${errors[key]}; ${parsed.error}` : parsed.error;
+        } else {
+          cond.max = parsed.value ?? undefined;
+        }
+      }
       if (cond.min != null || cond.max != null) result[key] = cond;
     } else {
-      const num = Number(value.value);
-      if (value.value !== "" && value.value != null && !Number.isNaN(num)) {
+      const parsed = parseNumericInput(value.value ?? "", unit);
+      if (parsed.error) {
+        errors[key] = parsed.error;
+      } else if (parsed.value != null) {
         // 后端条件仅支持 min/max，将阈值运算符映射为闭区间边界
-        if (value.op === ">" || value.op === ">=") result[key] = { min: num };
-        else result[key] = { max: num };
+        if (value.op === ">" || value.op === ">=") result[key] = { min: parsed.value };
+        else result[key] = { max: parsed.value };
       }
     }
   }
   result.has_carbon_data = carbonMode;
-  return result;
+  return { filters: result, errors };
 }
 
 /** Apply a preset template's API-format filters back into UI state. */
@@ -188,9 +230,11 @@ export default function Home() {
       .catch((e) => setError(`Failed to load filters: ${e.message}`));
   }, []);
 
+  const fieldMeta = useMemo(() => buildFieldMeta(dimensions), [dimensions]);
+
   const apiFilters = useMemo(
-    () => toApiFilters(filterState, carbonMode),
-    [filterState, carbonMode],
+    () => toApiFilters(filterState, carbonMode, fieldMeta),
+    [filterState, carbonMode, fieldMeta],
   );
 
   // Run screener whenever query params change
@@ -203,11 +247,21 @@ export default function Home() {
       const targetPage = opts?.page ?? 1;
       if (opts?.page == null) setPage(1);
 
+      const errorKeys = Object.keys(apiFilters.errors);
+      if (errorKeys.length > 0) {
+        const messages = errorKeys.map(
+          (key) => `${displayFieldLabel(fieldMeta[key] ?? { key, label: key })}: ${apiFilters.errors[key]}`,
+        );
+        setError(`Invalid filter values: ${messages.join("; ")}`);
+        setLoading(false);
+        return;
+      }
+
       setLoading(true);
       setError(null);
       runScreener(
         {
-          filters: apiFilters,
+          filters: apiFilters.filters,
           page: targetPage,
           pageSize: PAGE_SIZE,
           sortBy,
@@ -290,9 +344,10 @@ export default function Home() {
     const controller = new AbortController();
     abortRef.current = controller;
     setLoading(true);
+    setError(null);
     runScreener(
       {
-        filters: apiFilters,
+        filters: apiFilters.filters,
         page: p,
         pageSize: PAGE_SIZE,
         sortBy,
@@ -313,9 +368,18 @@ export default function Home() {
   };
 
   const handleExport = async () => {
+    const errorKeys = Object.keys(apiFilters.errors);
+    if (errorKeys.length > 0) {
+      const messages = errorKeys.map(
+        (key) => `${displayFieldLabel(fieldMeta[key] ?? { key, label: key })}: ${apiFilters.errors[key]}`,
+      );
+      setError(`Invalid filter values: ${messages.join("; ")}`);
+      return;
+    }
+
     setExporting(true);
     try {
-      await exportCsv({ filters: apiFilters, sortBy, sortOrder });
+      await exportCsv({ filters: apiFilters.filters, sortBy, sortOrder });
     } catch (e) {
       setError(e instanceof Error ? e.message : "Export failed");
     } finally {
@@ -432,6 +496,7 @@ export default function Home() {
           dimensions={dimensions}
           filterState={filterState}
           carbonMode={carbonMode}
+          errors={apiFilters.errors}
           onFilterChange={handleFilterChange}
           onCarbonModeChange={(mode) => {
             setCarbonMode(mode);
