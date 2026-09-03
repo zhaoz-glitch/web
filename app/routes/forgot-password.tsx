@@ -8,6 +8,7 @@ import {
 } from "react";
 import { Link, Navigate, useNavigate } from "react-router";
 import { BrandPanel } from "~/components/BrandPanel";
+import { PasswordInput } from "~/components/PasswordInput";
 import {
   forgotPasswordApi,
   resetPasswordApi,
@@ -186,6 +187,17 @@ export default function ForgotPasswordPage() {
                     onChange={(e) => {
                       setEmail(e.target.value);
                       setError("");
+                      e.currentTarget.setCustomValidity("");
+                    }}
+                    onInvalid={(e) => {
+                      const el = e.currentTarget;
+                      if (el.validity.valueMissing) {
+                        el.setCustomValidity("Please enter your email");
+                      } else if (el.validity.typeMismatch) {
+                        el.setCustomValidity("Please enter a valid email address");
+                      } else {
+                        el.setCustomValidity("");
+                      }
                     }}
                     placeholder="you@example.com"
                     className="glass-input"
@@ -288,11 +300,9 @@ export default function ForgotPasswordPage() {
                   <label className="mb-1.5 block text-sm font-medium text-ink-700">
                     New password
                   </label>
-                  <input
-                    type="password"
+                  <PasswordInput
                     value={newPassword}
                     onChange={(e) => setNewPassword(e.target.value)}
-                    className="glass-input"
                     autoComplete="new-password"
                     autoFocus
                     required
@@ -302,11 +312,9 @@ export default function ForgotPasswordPage() {
                   <label className="mb-1.5 block text-sm font-medium text-ink-700">
                     Confirm password
                   </label>
-                  <input
-                    type="password"
+                  <PasswordInput
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
-                    className="glass-input"
                     autoComplete="new-password"
                     required
                   />

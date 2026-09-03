@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from "react";
 import { Link, useLocation, useNavigate, useSearchParams } from "react-router";
 import { BrandPanel } from "~/components/BrandPanel";
+import { PasswordInput } from "~/components/PasswordInput";
 import { loginApi, registerApi } from "~/lib/api";
 import { useAuth } from "~/lib/auth";
 
@@ -16,6 +17,7 @@ export default function LoginPage() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
@@ -33,6 +35,10 @@ export default function LoginPage() {
     }
     if (stage === "signup" && !name.trim()) {
       setError("Enter your name");
+      return;
+    }
+    if (stage === "signup" && password !== confirmPassword) {
+      setError("Passwords do not match");
       return;
     }
 
@@ -75,7 +81,7 @@ export default function LoginPage() {
           <div className="flex rounded-2xl bg-ink-100/70 p-1">
             <button
               type="button"
-              onClick={() => { setStage("signin"); setError(""); }}
+              onClick={() => { setStage("signin"); setConfirmPassword(""); setError(""); }}
               className={`flex-1 rounded-xl py-2.5 text-sm font-medium transition ${
                 stage === "signin" ? "bg-white text-ink-900 shadow-sm" : "text-ink-500 hover:text-ink-700"
               }`}
@@ -84,7 +90,7 @@ export default function LoginPage() {
             </button>
             <button
               type="button"
-              onClick={() => { setStage("signup"); setError(""); }}
+              onClick={() => { setStage("signup"); setConfirmPassword(""); setError(""); }}
               className={`flex-1 rounded-xl py-2.5 text-sm font-medium transition ${
                 stage === "signup" ? "bg-white text-ink-900 shadow-sm" : "text-ink-500 hover:text-ink-700"
               }`}
@@ -111,7 +117,21 @@ export default function LoginPage() {
               <input
                 type="email"
                 value={email}
-                onChange={(e) => { setEmail(e.target.value); setError(""); }}
+                onChange={(e) => {
+                  setEmail(e.target.value);
+                  setError("");
+                  e.currentTarget.setCustomValidity("");
+                }}
+                onInvalid={(e) => {
+                  const el = e.currentTarget;
+                  if (el.validity.valueMissing) {
+                    el.setCustomValidity("Please enter your email");
+                  } else if (el.validity.typeMismatch) {
+                    el.setCustomValidity("Please enter a valid email address");
+                  } else {
+                    el.setCustomValidity("");
+                  }
+                }}
                 placeholder="you@university.edu"
                 className="glass-input"
                 autoComplete="email"
@@ -130,16 +150,33 @@ export default function LoginPage() {
                   </Link>
                 )}
               </div>
-              <input
-                type="password"
+              <PasswordInput
                 value={password}
                 onChange={(e) => { setPassword(e.target.value); setError(""); }}
                 placeholder={stage === "signup" ? "At least 6 characters" : "Enter password"}
-                className="glass-input"
                 autoComplete={stage === "signin" ? "current-password" : "new-password"}
                 required
               />
             </div>
+            {stage === "signup" && (
+              <div>
+                <label className="mb-1.5 block text-sm font-medium text-ink-700">
+                  Confirm password
+                </label>
+                <PasswordInput
+                  value={confirmPassword}
+                  onChange={(e) => { setConfirmPassword(e.target.value); setError(""); }}
+                  placeholder="Re-enter password"
+                  autoComplete="new-password"
+                  required
+                />
+                {confirmPassword.length > 0 && confirmPassword !== password && (
+                  <p className="mt-1.5 text-xs font-medium text-red-500">
+                    Passwords do not match
+                  </p>
+                )}
+              </div>
+            )}
 
             {error && <p className="text-sm font-medium text-red-500">{error}</p>}
 
