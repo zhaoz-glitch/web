@@ -1,8 +1,9 @@
 /** Parse a user-typed numeric filter value into a normalized number.
  *
- * Percentage fields (unit === "%") accept both bare numbers and numbers with a
- * trailing percent sign: "10%" and "10" both become 10, because the database
- * stores these metrics as percentages already. "0.1" becomes 0.1.
+ * Percentage fields (unit === "%") use fraction semantics: "10%" and "0.1"
+ * both become 0.1 (ten percent). A trailing "%" divides the number by 100.
+ * The backend multiplies percent-field inputs by 100 before comparing against
+ * the database, which stores percentage points (6.36 == 6.36%).
  *
  * Empty strings are treated as "not set" (value: null, no error).
  * Garbage like "abc" returns an error message.
@@ -15,11 +16,14 @@ export function parseNumericInput(
   if (trimmed === "") return { value: null };
 
   let raw = trimmed;
+  let isPercent = false;
 
-  // Strip an explicit trailing percent sign regardless of declared unit,
-  // so "10%" works everywhere the user thinks to type it.
   if (raw.endsWith("%")) {
     raw = raw.slice(0, -1).trim();
+    isPercent = true;
+    if (raw === "") {
+      return { value: null, error: `'${value}' is not a valid number` };
+    }
   }
 
   const num = Number(raw);
@@ -31,5 +35,5 @@ export function parseNumericInput(
     return { value: null, error: `'${value}' is not a valid finite number` };
   }
 
-  return { value: num };
+  return { value: isPercent ? num / 100 : num };
 }

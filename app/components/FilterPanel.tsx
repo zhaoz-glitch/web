@@ -146,7 +146,13 @@ export function FilterPanel({
                             type="text"
                             inputMode="decimal"
                             autoComplete="off"
-                            placeholder={field.unit ? `Min (${field.unit})` : "Min"}
+                            placeholder={
+                              field.unit === "%"
+                                ? "Min (0.1 = 10%)"
+                                : field.unit
+                                  ? `Min (${field.unit})`
+                                  : "Min"
+                            }
                             value={value.min ?? ""}
                             onChange={(e) =>
                               onFilterChange(field.key, {
@@ -161,7 +167,13 @@ export function FilterPanel({
                             type="text"
                             inputMode="decimal"
                             autoComplete="off"
-                            placeholder={field.unit ? `Max (${field.unit})` : "Max"}
+                            placeholder={
+                              field.unit === "%"
+                                ? "Max (0.1 = 10%)"
+                                : field.unit
+                                  ? `Max (${field.unit})`
+                                  : "Max"
+                            }
                             value={value.max ?? ""}
                             onChange={(e) =>
                               onFilterChange(field.key, {
@@ -200,7 +212,13 @@ export function FilterPanel({
                             type="text"
                             inputMode="decimal"
                             autoComplete="off"
-                            placeholder={field.unit ? `Value (${field.unit})` : "Value"}
+                            placeholder={
+                              field.unit === "%"
+                                ? "Value (0.1 = 10%)"
+                                : field.unit
+                                  ? `Value (${field.unit})`
+                                  : "Value"
+                            }
                             value={value.value ?? ""}
                             onChange={(e) =>
                               onFilterChange(field.key, {

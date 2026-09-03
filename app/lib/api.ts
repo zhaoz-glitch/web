@@ -38,19 +38,41 @@ function withAuth(init?: RequestInit): RequestInit {
 }
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
-  const res = await fetch(`${API_BASE}${path}`, withAuth(init));
-  if (!res.ok) {
-    let message = `HTTP ${res.status}`;
+  const url = `${API_BASE}${path}`;
+  const options = withAuth(init);
+  const isGet = !options.method || options.method === "GET";
+  const maxRetries = isGet ? 3 : 0;
+
+  let lastError: Error | undefined;
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
     try {
-      const body = await res.json();
-      if (body?.message) message = body.message;
-      else if (body?.error) message = body.error;
-    } catch {
-      /* ignore parse errors */
+      const res = await fetch(url, options);
+      if (!res.ok) {
+        let message = `HTTP ${res.status}`;
+        try {
+          const body = await res.json();
+          if (body?.message) message = body.message;
+          else if (body?.error) message = body.error;
+        } catch {
+          /* ignore parse errors */
+        }
+        throw new Error(message);
+      }
+      return res.json() as Promise<T>;
+    } catch (e) {
+      lastError = e instanceof Error ? e : new Error(String(e));
+      const isNetworkError =
+        lastError.message === "Failed to fetch" ||
+        lastError.message.includes("NetworkError") ||
+        lastError.message.includes("network");
+      if (attempt < maxRetries && isNetworkError) {
+        await new Promise((r) => setTimeout(r, 1000 * (attempt + 1)));
+        continue;
+      }
+      throw lastError;
     }
-    throw new Error(message);
   }
-  return res.json() as Promise<T>;
+  throw lastError ?? new Error("Request failed");
 }
 
 export function getFields(): Promise<FieldsResponse> {
