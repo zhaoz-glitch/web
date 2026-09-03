@@ -20,6 +20,7 @@ import type {
   StockDetail,
   TemplatesResponse,
   CarbonTrendPoint,
+  FilterCondition,
 } from "~/types";
 
 const API_BASE = (import.meta.env.VITE_API_BASE as string | undefined) ?? "";
@@ -123,8 +124,16 @@ export function getCarbonTrend(
   return request(`/api/stock/${encodeSymbol(symbol)}/carbon-trend`);
 }
 
-/** POST /api/screener/export and trigger a CSV file download. */
-export async function exportCsv(body: ScreenerRequest): Promise<void> {
+export interface ExportRequest {
+  filters: Record<string, FilterCondition | string>;
+  sortBy?: string;
+  sortOrder?: "asc" | "desc";
+  symbols?: string[];
+  includeCharts?: boolean;
+}
+
+/** POST /api/screener/export and trigger a file download (CSV or ZIP). */
+export async function exportCsv(body: ExportRequest): Promise<void> {
   const res = await fetch(`${API_BASE}/api/screener/export`, withAuth({
     method: "POST",
     body: JSON.stringify(body),
@@ -135,7 +144,8 @@ export async function exportCsv(body: ScreenerRequest): Promise<void> {
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
-  a.download = "low_carbon_screener_export.csv";
+  const isZip = res.headers.get("content-type")?.includes("zip") ?? false;
+  a.download = isZip ? "low_carbon_screener_export.zip" : "low_carbon_screener_export.csv";
   document.body.appendChild(a);
   a.click();
   a.remove();

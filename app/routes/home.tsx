@@ -2,11 +2,13 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router";
 import type { Route } from "./+types/home";
 import { exportCsv, getFields, getTemplates, runScreener } from "~/lib/api";
+import type { ExportRequest } from "~/lib/api";
 import { useAuth } from "~/lib/auth";
 import { TemplateSelector } from "~/components/TemplateSelector";
 import { FilterPanel, describeFilter } from "~/components/FilterPanel";
 import { ResultsTable, type SortKey } from "~/components/ResultsTable";
 import { StockDrawer } from "~/components/StockDrawer";
+import { ExportDialog } from "~/components/ExportDialog";
 import { displayFieldLabel } from "~/lib/labels";
 import { parseNumericInput } from "~/lib/numbers";
 import type {
@@ -217,6 +219,12 @@ export default function Home() {
   // Drawer
   const [drawerSymbol, setDrawerSymbol] = useState<string | null>(null);
 
+  // Selection
+  const [selectedSymbols, setSelectedSymbols] = useState<string[]>([]);
+
+  // Export dialog
+  const [exportDialogOpen, setExportDialogOpen] = useState(false);
+
   const abortRef = useRef<AbortController | null>(null);
 
   // Load metadata (fields + templates) with auto-retry on network errors
@@ -316,12 +324,14 @@ export default function Home() {
   const handleFilterChange = (key: string, value: FilterValue) => {
     setFilterState((prev) => ({ ...prev, [key]: value }));
     setActiveTemplateIds([]);
+    setSelectedSymbols([]);
   };
 
   const handleReset = () => {
     setFilterState(buildInitialFilters(dimensions));
     setCarbonMode("true");
     setActiveTemplateIds([]);
+    setSelectedSymbols([]);
   };
 
   const handleTemplateToggle = (template: Template) => {
@@ -329,6 +339,7 @@ export default function Home() {
       const exists = prev.includes(template.id);
       const next = exists ? prev.filter((id) => id !== template.id) : [...prev, template.id];
 
+      setSelectedSymbols([]);
       if (next.length === 0) {
         setFilterState(buildInitialFilters(dimensions));
         setCarbonMode("true");
@@ -388,7 +399,25 @@ export default function Home() {
       });
   };
 
-  const handleExport = async () => {
+  const handleToggleSelect = (symbol: string) => {
+    setSelectedSymbols((prev) =>
+      prev.includes(symbol) ? prev.filter((s) => s !== symbol) : [...prev, symbol],
+    );
+  };
+
+  const handleSelectAll = () => {
+    const allSelected = rows.every((r) => selectedSymbols.includes(r.symbol));
+    if (allSelected) {
+      setSelectedSymbols((prev) => prev.filter((s) => !rows.find((r) => r.symbol === s)));
+    } else {
+      setSelectedSymbols((prev) => {
+        const pageSymbols = rows.map((r) => r.symbol);
+        return Array.from(new Set([...prev, ...pageSymbols]));
+      });
+    }
+  };
+
+  const handleExport = () => {
     const errorKeys = Object.keys(apiFilters.errors);
     if (errorKeys.length > 0) {
       const messages = errorKeys.map(
@@ -397,10 +426,20 @@ export default function Home() {
       setError(`Invalid filter values: ${messages.join("; ")}`);
       return;
     }
+    setExportDialogOpen(true);
+  };
 
+  const handleExportConfirm = async (opts: { scope: "all" | "selected"; includeCharts: boolean }) => {
+    const symbols = opts.scope === "selected" ? selectedSymbols : undefined;
     setExporting(true);
     try {
-      await exportCsv({ filters: apiFilters.filters, sortBy, sortOrder });
+      await exportCsv({
+        filters: apiFilters.filters,
+        sortBy,
+        sortOrder,
+        symbols,
+        includeCharts: opts.includeCharts,
+      });
     } catch (e) {
       setError(e instanceof Error ? e.message : "Export failed");
     } finally {
@@ -566,6 +605,17 @@ export default function Home() {
           onRowClick={setDrawerSymbol}
           onExport={handleExport}
           exporting={exporting}
+          selectedSymbols={selectedSymbols}
+          onToggleSelect={handleToggleSelect}
+          onSelectAll={handleSelectAll}
+        />
+
+        <ExportDialog
+          open={exportDialogOpen}
+          totalCount={total}
+          selectedCount={selectedSymbols.length}
+          onClose={() => setExportDialogOpen(false)}
+          onConfirm={handleExportConfirm}
         />
 
         <footer className="pb-6 pt-2 text-center text-xs text-gray-400 dark:text-gray-500">
