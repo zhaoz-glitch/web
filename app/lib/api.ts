@@ -41,7 +41,7 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const url = `${API_BASE}${path}`;
   const options = withAuth(init);
   const isGet = !options.method || options.method === "GET";
-  const maxRetries = isGet ? 3 : 0;
+  const maxRetries = isGet ? 5 : 0;
 
   let lastError: Error | undefined;
   for (let attempt = 0; attempt <= maxRetries; attempt++) {
@@ -64,9 +64,11 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
       const isNetworkError =
         lastError.message === "Failed to fetch" ||
         lastError.message.includes("NetworkError") ||
-        lastError.message.includes("network");
+        lastError.message.includes("network") ||
+        lastError.message.includes("AbortError");
       if (attempt < maxRetries && isNetworkError) {
-        await new Promise((r) => setTimeout(r, 1000 * (attempt + 1)));
+        // Exponential backoff: 1s, 2s, 4s, 8s, 16s (max ~31s total)
+        await new Promise((r) => setTimeout(r, 1000 * 2 ** attempt));
         continue;
       }
       throw lastError;

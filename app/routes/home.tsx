@@ -219,16 +219,37 @@ export default function Home() {
 
   const abortRef = useRef<AbortController | null>(null);
 
-  // Load metadata on mount
+  // Load metadata (fields + templates) with auto-retry on network errors
+  const loadMetadata = useCallback(
+    (opts?: { silent?: boolean }) => {
+      if (!opts?.silent) setLoading(true);
+      Promise.all([getFields(), getTemplates()])
+        .then(([fieldsRes, templatesRes]) => {
+          setDimensions(fieldsRes.dimensions);
+          setFilterState(buildInitialFilters(fieldsRes.dimensions));
+          setTemplates(templatesRes.templates);
+          setError(null);
+        })
+        .catch((e) => {
+          const msg = e instanceof Error ? e.message : String(e);
+          const isNetwork =
+            msg === "Failed to fetch" ||
+            msg.includes("NetworkError") ||
+            msg.includes("network");
+          if (isNetwork && !opts?.silent) {
+            // Auto-retry once after 3s without showing error
+            setTimeout(() => loadMetadata({ silent: true }), 3000);
+          }
+          setError(`Failed to load filters: ${msg}`);
+        })
+        .finally(() => setLoading(false));
+    },
+    [],
+  );
+
   useEffect(() => {
-    Promise.all([getFields(), getTemplates()])
-      .then(([fieldsRes, templatesRes]) => {
-        setDimensions(fieldsRes.dimensions);
-        setFilterState(buildInitialFilters(fieldsRes.dimensions));
-        setTemplates(templatesRes.templates);
-      })
-      .catch((e) => setError(`Failed to load filters: ${e.message}`));
-  }, []);
+    loadMetadata();
+  }, [loadMetadata]);
 
   const fieldMeta = useMemo(() => buildFieldMeta(dimensions), [dimensions]);
 
@@ -479,8 +500,17 @@ export default function Home() {
 
       <main className="mx-auto max-w-7xl space-y-4 px-4 py-6 sm:px-6">
         {error && (
-          <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600 dark:border-red-900/60 dark:bg-red-950/40 dark:text-red-400">
-            {error}
+          <div className="flex items-center justify-between rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600 dark:border-red-900/60 dark:bg-red-950/40 dark:text-red-400">
+            <span>{error}</span>
+            {error.includes("Failed to load filters") && (
+              <button
+                type="button"
+                onClick={() => loadMetadata()}
+                className="ml-3 rounded-md bg-red-100 px-2.5 py-1 text-xs font-medium text-red-700 transition hover:bg-red-200 dark:bg-red-900/50 dark:text-red-300 dark:hover:bg-red-900/70"
+              >
+                重试
+              </button>
+            )}
           </div>
         )}
 

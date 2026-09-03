@@ -4,15 +4,18 @@ import type { ScreenerRow } from "~/types";
 export type SortKey =
   | "symbol"
   | "sector"
-  | "market_cap_basic"
   | "close"
+  | "market_cap_basic"
   | "price_earnings_ttm"
   | "price_book_value"
-  | "turnover"
   | "dividend_yield_recent"
+  | "turnover"
+  | "volume"
+  | "change_1_year"
+  | "net_margin"
   | "carbon_intensity_revenue"
-  | "carbon_change_yoy"
-  | "total_emissions";
+  | "total_emissions"
+  | "carbon_change_yoy";
 
 interface Props {
   rows: ScreenerRow[];
@@ -39,6 +42,18 @@ function fmtMarketCap(v: number | null): string {
 
 function fmtNum(v: number | null, digits = 2): string {
   return v == null ? "—" : v.toFixed(digits);
+}
+
+function fmtPercent(v: number | null, digits = 2): string {
+  return v == null ? "—" : `${v.toFixed(digits)}%`;
+}
+
+function fmtVolume(v: number | null): string {
+  if (v == null) return "—";
+  if (v >= 1e9) return `${(v / 1e9).toFixed(2)}B`;
+  if (v >= 1e6) return `${(v / 1e6).toFixed(2)}M`;
+  if (v >= 1e3) return `${(v / 1e3).toFixed(1)}K`;
+  return `${v}`;
 }
 
 function fmtEmissions(v: number | null): string {
@@ -90,28 +105,37 @@ export function ResultsTable({
     setJumpValue(String(clamped));
   };
 
-  const columns: { key: SortKey | null; label: string }[] = [
-    { key: "symbol", label: "Symbol" },
-    { key: "sector", label: "Sector" },
-    { key: "close", label: "Price" },
-    { key: "market_cap_basic", label: "Mkt Cap" },
-    { key: "price_earnings_ttm", label: "PE (TTM)" },
-    { key: "price_book_value", label: "PB" },
-    { key: "dividend_yield_recent", label: "Yield" },
-    { key: "carbon_intensity_revenue", label: "Intensity" },
-    { key: "total_emissions", label: "Emissions" },
-    { key: "carbon_change_yoy", label: "Carbon YoY" },
+  const columns: { key: SortKey; label: string; align: "left" | "right"; render: (row: ScreenerRow) => React.ReactNode }[] = [
+    { key: "symbol", label: "Symbol", align: "left", render: (row) => (
+      <>
+        <div className="font-medium text-gray-900 dark:text-gray-100">{row.symbol}</div>
+        <div className="max-w-[180px] truncate text-xs text-gray-500 dark:text-gray-400">{row.name}</div>
+      </>
+    )},
+    { key: "sector", label: "Sector", align: "left", render: (row) => (
+      <span className="rounded bg-gray-100 px-1.5 py-0.5 text-xs text-gray-600 dark:bg-emerald-950/20 dark:text-gray-300">
+        {row.sector}
+      </span>
+    )},
+    { key: "close", label: "Price", align: "right", render: (row) => <span className="tabular-nums">{fmtNum(row.close)}</span> },
+    { key: "market_cap_basic", label: "Market Cap (USD)", align: "right", render: (row) => <span className="tabular-nums">{fmtMarketCap(row.market_cap)}</span> },
+    { key: "price_earnings_ttm", label: "PE (TTM) (x)", align: "right", render: (row) => <span className="tabular-nums">{fmtNum(row.pe_ttm, 1)}</span> },
+    { key: "price_book_value", label: "PB (x)", align: "right", render: (row) => <span className="tabular-nums">{fmtNum(row.pb, 1)}</span> },
+    { key: "dividend_yield_recent", label: "Div. Yield (%)", align: "right", render: (row) => <span className="tabular-nums">{fmtPercent(row.dividend_yield)}</span> },
+    { key: "turnover", label: "Turnover (%)", align: "right", render: (row) => <span className="tabular-nums">{fmtPercent(row.turnover)}</span> },
+    { key: "volume", label: "Volume (shares)", align: "right", render: (row) => <span className="tabular-nums">{fmtVolume(row.volume)}</span> },
+    { key: "change_1_year", label: "52W Change (%)", align: "right", render: (row) => <span className="tabular-nums">{fmtPercent(row.week_52_change)}</span> },
+    { key: "net_margin", label: "Net Margin (%)", align: "right", render: (row) => <span className="tabular-nums">{fmtPercent(row.net_profit_margin)}</span> },
+    { key: "carbon_intensity_revenue", label: "Carbon Intensity (tCO2e/$M)", align: "right", render: (row) => (
+      row.has_carbon_data
+        ? <span className="tabular-nums text-gray-800 dark:text-gray-200">{fmtNum(row.carbon_intensity_revenue, 1)}</span>
+        : <span className="text-xs text-gray-400 dark:text-gray-500">N/A</span>
+    )},
+    { key: "total_emissions", label: "Total Emissions (tCO2e)", align: "right", render: (row) => <span className="tabular-nums text-gray-600 dark:text-gray-300">{fmtEmissions(row.total_emissions)}</span> },
+    { key: "carbon_change_yoy", label: "Carbon YoY (%)", align: "right", render: (row) => <YoYBadge value={row.carbon_change_yoy} /> },
   ];
 
-  const numericKeys: SortKey[] = [
-    "close",
-    "market_cap_basic",
-    "price_earnings_ttm",
-    "price_book_value",
-    "dividend_yield_recent",
-    "carbon_intensity_revenue",
-    "total_emissions",
-  ];
+  const numericKeys: SortKey[] = columns.filter((c) => c.align === "right").map((c) => c.key);
 
   return (
     <div className="rounded-xl border border-gray-200 bg-white shadow-sm dark:border-emerald-900/30 dark:bg-[#0f1c18]">
@@ -183,43 +207,14 @@ export function ResultsTable({
                   onClick={() => onRowClick(row.symbol)}
                   className="cursor-pointer border-b border-gray-50 hover:bg-emerald-50/40 dark:border-gray-800/60 dark:hover:bg-emerald-950/20"
                 >
-                  <td className="px-3 py-2.5">
-                    <div className="font-medium text-gray-900 dark:text-gray-100">{row.symbol}</div>
-                    <div className="max-w-[180px] truncate text-xs text-gray-500 dark:text-gray-400">
-                      {row.name}
-                    </div>
-                  </td>
-                  <td className="px-3 py-2.5">
-                    <span className="rounded bg-gray-100 px-1.5 py-0.5 text-xs text-gray-600 dark:bg-emerald-950/20 dark:text-gray-300">
-                      {row.sector}
-                    </span>
-                  </td>
-                  <td className="px-3 py-2.5 text-right tabular-nums">
-                    {fmtNum(row.close)}
-                  </td>
-                  <td className="px-3 py-2.5 text-right tabular-nums">
-                    {fmtMarketCap(row.market_cap)}
-                  </td>
-                  <td className="px-3 py-2.5 tabular-nums">{fmtNum(row.pe_ttm, 1)}</td>
-                  <td className="px-3 py-2.5 tabular-nums">{fmtNum(row.pb, 1)}</td>
-                  <td className="px-3 py-2.5 tabular-nums">
-                    {row.dividend_yield == null ? "—" : `${row.dividend_yield.toFixed(2)}%`}
-                  </td>
-                  <td className="px-3 py-2.5">
-                    {row.has_carbon_data ? (
-                      <span className="tabular-nums text-gray-800 dark:text-gray-200">
-                        {fmtNum(row.carbon_intensity_revenue, 1)}
-                      </span>
-                    ) : (
-                      <span className="text-xs text-gray-400 dark:text-gray-500">N/A</span>
-                    )}
-                  </td>
-                  <td className="px-3 py-2.5 tabular-nums text-gray-600 dark:text-gray-300">
-                    {fmtEmissions(row.total_emissions)}
-                  </td>
-                  <td className="px-3 py-2.5">
-                    <YoYBadge value={row.carbon_change_yoy} />
-                  </td>
+                  {columns.map((col) => (
+                    <td
+                      key={col.key}
+                      className={`px-3 py-2.5 ${col.align === "right" ? "text-right" : "text-left"}`}
+                    >
+                      {col.render(row)}
+                    </td>
+                  ))}
                 </tr>
               ))
             )}
