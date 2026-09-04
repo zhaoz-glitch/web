@@ -40,3 +40,103 @@ body {
 .btn-primary {
   @apply flex h-11 items-center justify-center rounded-2xl bg-accent px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60;
 }
+
+/* ─────────────────────────────────────────────────────────────
+ * Pro Max motion utilities
+ * - Only animate GPU-safe properties (transform, opacity, filter)
+ * - All animations are killed under reduced-motion preference
+ * ────────────────────────────────────────────────────────────── */
+
+/* Slow aurora drift used inside the gradient header. Two radial blobs
+ * translate slowly in opposite directions to create a living surface
+ * without ever re-painting. */
+@keyframes aurora-drift-a {
+  0%   { transform: translate3d(-8%, 0, 0) scale(1); }
+  50%  { transform: translate3d(6%, 4%, 0) scale(1.08); }
+  100% { transform: translate3d(-8%, 0, 0) scale(1); }
+}
+@keyframes aurora-drift-b {
+  0%   { transform: translate3d(8%, 2%, 0) scale(1.05); }
+  50%  { transform: translate3d(-10%, -4%, 0) scale(0.96); }
+  100% { transform: translate3d(8%, 2%, 0) scale(1.05); }
+}
+.aurora-a { animation: aurora-drift-a 22s ease-in-out infinite; }
+.aurora-b { animation: aurora-drift-b 28s ease-in-out infinite; }
+
+/* Staggered rise-in: each item sets --i and the keyframe nudges it
+ * from translateY(8px) + opacity 0 to rest. Items beyond the first
+ * few are clipped (--i capped via clamp) so later cards don't lag. */
+@keyframes rise-in {
+  from { opacity: 0; transform: translate3d(0, 8px, 0); }
+  to   { opacity: 1; transform: translate3d(0, 0, 0); }
+}
+.rise-in {
+  opacity: 0;
+  animation: rise-in 520ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation-delay: calc(min(var(--i, 0), 8) * 60ms);
+}
+
+/* Subtle shimmer for status pills / timestamps. Pure transform +
+ * background-position animation on a translucent gradient. */
+@keyframes shimmer {
+  0%   { background-position: -100% 0; }
+  100% { background-position: 200% 0; }
+}
+.shimmer::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    110deg,
+    transparent 30%,
+    rgba(255, 255, 255, 0.25) 50%,
+    transparent 70%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 3.4s linear infinite;
+  pointer-events: none;
+  border-radius: inherit;
+}
+
+/* Spotlight border: paints an emerald glow that tracks the cursor
+ * inside the card. The card sets --mx / --my on mouse move. */
+.spotlight-card {
+  position: relative;
+  isolation: isolate;
+}
+.spotlight-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  background: radial-gradient(
+    220px circle at var(--mx, 50%) var(--my, 50%),
+    rgba(16, 185, 129, 0.55),
+    transparent 60%
+  );
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+          mask-composite: exclude;
+  opacity: 0;
+  transition: opacity 220ms ease;
+  pointer-events: none;
+  z-index: 1;
+}
+.spotlight-card:hover::before { opacity: 1; }
+
+/* Respect users who don't want motion. */
+@media (prefers-reduced-motion: reduce) {
+  .aurora-a,
+  .aurora-b,
+  .rise-in,
+  .shimmer::before,
+  .spotlight-card::before {
+    animation: none !important;
+    transition: none !important;
+  }
+  .rise-in { opacity: 1; }
+  .spotlight-card:hover::before { opacity: 0; }
+}

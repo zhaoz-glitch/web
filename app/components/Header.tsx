@@ -29,7 +29,21 @@ export function Header({ userName, onLogout }: Props) {
       >
         <path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z" />
       </svg>
-      <div className="pointer-events-none absolute -left-24 top-0 h-48 w-96 rounded-full bg-white/10 blur-3xl" />
+
+      {/* Slow-drifting aurora blobs — give the gradient header a living
+          surface without ever triggering a repaint of the chrome. */}
+      <div
+        aria-hidden
+        className="aurora-a pointer-events-none absolute -left-24 top-0 h-56 w-[28rem] rounded-full bg-emerald-300/25 blur-3xl"
+      />
+      <div
+        aria-hidden
+        className="aurora-b pointer-events-none absolute -right-32 -bottom-20 h-64 w-[32rem] rounded-full bg-cyan-300/20 blur-3xl"
+      />
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/40 to-transparent"
+      />
 
       <div className="relative mx-auto max-w-7xl px-4 py-5 sm:px-6">
         <div className="flex flex-wrap items-center justify-between gap-4">
