@@ -131,6 +131,12 @@ export interface CarbonTrendPoint {
   carbon_intensity_revenue: number | null;
   total_emissions: number | null;
   carbon_change_yoy: number | null;
+  /** Cross-sectional baselines for the same report year (simple average,
+   *  companies with NULL intensity excluded). Null = no peers that year. */
+  us_avg_intensity?: number | null;
+  us_peer_count?: number | null;
+  sector_avg_intensity?: number | null;
+  sector_peer_count?: number | null;
 }
 
 export interface StockDetail {

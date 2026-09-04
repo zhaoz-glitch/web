@@ -2,13 +2,22 @@ import type { CarbonTrendPoint } from "~/types";
 
 interface Props {
   data: CarbonTrendPoint[];
+  /** Sector label of the selected company, used in the legend for the
+   *  sector-average baseline (e.g. "Electronic Technology"). */
+  sector?: string | null;
 }
 
 /**
- * Lightweight SVG line chart for the 5-year carbon trend
- * (total emissions bars + carbon intensity line, dual scale).
+ * Lightweight SVG line chart for the 5-year carbon trend.
+ *
+ * Left axis  — total emissions bars (tCO2e)
+ * Right axis — carbon intensity (tCO2e / $M) with two reference lines:
+ *              • US market average  (cross-sectional, whole covered universe)
+ *              • Sector average     (peers within the company's sector 大类)
+ * Baselines come pre-computed from the backend; a year with no peer values
+ * leaves a gap instead of drawing a fake straight segment.
  */
-export function CarbonTrendChart({ data }: Props) {
+export function CarbonTrendChart({ data, sector }: Props) {
   const valid = data.filter((d) => d.total_emissions != null);
   if (valid.length === 0) {
     return (
@@ -19,21 +28,25 @@ export function CarbonTrendChart({ data }: Props) {
   }
 
   const W = 480;
-  const H = 200;
-  const PAD = { top: 20, right: 20, bottom: 30, left: 50 };
+  const H = 210;
+  const PAD = { top: 20, right: 46, bottom: 30, left: 50 };
   const plotW = W - PAD.left - PAD.right;
   const plotH = H - PAD.top - PAD.bottom;
 
   const emissions = valid.map((d) => d.total_emissions as number);
-  const intensities = valid
-    .filter((d) => d.carbon_intensity_revenue != null)
-    .map((d) => d.carbon_intensity_revenue as number);
+
+  // Three intensity-scale series: company, US market avg, sector avg.
+  const companyIntensity = valid.map((d) => d.carbon_intensity_revenue ?? null);
+  const usAvg = valid.map((d) => d.us_avg_intensity ?? null);
+  const sectorAvg = valid.map((d) => d.sector_avg_intensity ?? null);
+
+  const allIntensity = [...companyIntensity, ...usAvg, ...sectorAvg].filter(
+    (v): v is number => v != null,
+  );
 
   const maxEmission = Math.max(...emissions);
   const minEmission = 0;
-  const maxIntensity = intensities.length
-    ? Math.max(...intensities) * 1.15
-    : 1;
+  const maxIntensity = allIntensity.length ? Math.max(...allIntensity) * 1.15 : 1;
   const minIntensity = 0;
 
   const x = (i: number) =>
@@ -45,32 +58,59 @@ export function CarbonTrendChart({ data }: Props) {
 
   const barW = Math.min(28, (plotW / valid.length) * 0.5);
 
-  // Carbon intensity line path
-  const linePoints = valid
-    .map((d, i) =>
-      d.carbon_intensity_revenue != null
-        ? `${x(i)},${yIntensity(d.carbon_intensity_revenue)}`
-        : null,
-    )
-    .filter(Boolean) as string[];
-  const linePath = linePoints.length > 1 ? `M ${linePoints.join(" L ")}` : "";
+  // Segmented path: each series is split at null points (real gaps).
+  const lineSegments = (series: (number | null)[]): string => {
+    let d = "";
+    let active = false;
+    series.forEach((v, i) => {
+      if (v == null) {
+        active = false;
+        return;
+      }
+      d += `${active ? " L" : " M"} ${x(i).toFixed(1)},${yIntensity(v).toFixed(1)}`;
+      active = true;
+    });
+    return d.trim();
+  };
+
+  const companyPath = lineSegments(companyIntensity);
+  const usPath = lineSegments(usAvg);
+  const sectorPath = lineSegments(sectorAvg);
+
+  const lastPoint = (series: (number | null)[]): { i: number; v: number } | null => {
+    for (let i = series.length - 1; i >= 0; i--) {
+      if (series[i] != null) return { i, v: series[i] as number };
+    }
+    return null;
+  };
+  const usEnd = lastPoint(usAvg);
+  const sectorEnd = lastPoint(sectorAvg);
 
   const fmtEmission = (v: number) =>
     v >= 1e6 ? `${(v / 1e6).toFixed(1)}M` : v >= 1e3 ? `${(v / 1e3).toFixed(0)}K` : `${v}`;
+  const fmtIntensity = (v: number) => `${v.toFixed(0)}`;
 
   return (
     <div className="w-full">
-      <div className="mb-2 flex items-center gap-4 text-xs text-gray-500 dark:text-gray-400">
+      <div className="mb-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-gray-500 dark:text-gray-400">
         <span className="flex items-center gap-1">
           <span className="inline-block h-2.5 w-2.5 rounded-sm bg-emerald-500/60 dark:bg-emerald-400/50" />
           Total emissions (tCO2e)
         </span>
         <span className="flex items-center gap-1">
           <span className="inline-block h-0.5 w-4 bg-blue-600 dark:bg-blue-400" />
-          Intensity (t/$M)
+          Intensity
+        </span>
+        <span className="flex items-center gap-1" title="Simple average across all covered US stocks with intensity data that year">
+          <span className="inline-block w-4 border-t-2 border-dashed border-amber-600 dark:border-amber-400" />
+          US market avg
+        </span>
+        <span className="flex items-center gap-1" title="Simple average across peers in the same sector with intensity data that year">
+          <span className="inline-block w-4 border-t-2 border-dotted border-violet-600 dark:border-violet-400" />
+          {sector ? `${sector} avg` : "Sector avg"}
         </span>
       </div>
-      <svg viewBox={`0 0 ${W} ${H}`} className="w-full" role="img" aria-label="Carbon trend chart">
+      <svg viewBox={`0 0 ${W} ${H}`} className="w-full" role="img" aria-label="Carbon trend chart with US market and sector average baselines">
         {/* Y axis grid lines (emission scale) */}
         {[0, 0.25, 0.5, 0.75, 1].map((t) => {
           const y = PAD.top + plotH - t * plotH;
@@ -111,9 +151,27 @@ export function CarbonTrendChart({ data }: Props) {
           </rect>
         ))}
 
-        {/* Carbon intensity line */}
-        {linePath && (
-          <path d={linePath} fill="none" stroke="#2563eb" strokeWidth="2" strokeLinecap="round" className="stroke-blue-600 dark:stroke-blue-400" />
+        {/* Baseline reference lines (drawn under the company line) */}
+        {sectorPath && (
+          <path d={sectorPath} fill="none" strokeWidth="2" strokeDasharray="2 4" strokeLinecap="round" className="stroke-violet-600 dark:stroke-violet-400" />
+        )}
+        {usPath && (
+          <path d={usPath} fill="none" strokeWidth="2" strokeDasharray="6 4" strokeLinecap="round" className="stroke-amber-600 dark:stroke-amber-400" />
+        )}
+        {usEnd && (
+          <text x={x(usEnd.i) + 4} y={yIntensity(usEnd.v) + 3} fontSize="9" fill="#b45309" className="fill-amber-700 dark:fill-amber-400">
+            US {fmtIntensity(usEnd.v)}
+          </text>
+        )}
+        {sectorEnd && sectorPath && (
+          <text x={x(sectorEnd.i) + 4} y={yIntensity(sectorEnd.v) - 6} fontSize="9" fill="#7c3aed" className="fill-violet-700 dark:fill-violet-400">
+            S {fmtIntensity(sectorEnd.v)}
+          </text>
+        )}
+
+        {/* Company intensity line */}
+        {companyPath && (
+          <path d={companyPath} fill="none" stroke="#2563eb" strokeWidth="2" strokeLinecap="round" className="stroke-blue-600 dark:stroke-blue-400" />
         )}
         {valid.map((d, i) =>
           d.carbon_intensity_revenue != null ? (
@@ -126,7 +184,9 @@ export function CarbonTrendChart({ data }: Props) {
               className="fill-blue-600 dark:fill-blue-400"
             >
               <title>
-                {d.report_year}: {d.carbon_intensity_revenue.toFixed(1)} t/$M
+                {d.report_year}: {d.carbon_intensity_revenue.toFixed(1)} t/$M · US avg{" "}
+                {d.us_avg_intensity?.toFixed(1) ?? "n/a"} ({d.us_peer_count ?? 0} peers) · sector avg{" "}
+                {d.sector_avg_intensity?.toFixed(1) ?? "n/a"} ({d.sector_peer_count ?? 0} peers)
               </title>
             </circle>
           ) : null,

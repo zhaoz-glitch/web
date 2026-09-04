@@ -193,7 +193,7 @@ export function StockDrawer({ symbol, onClose }: Props) {
                   5-Year Carbon Trend
                 </h3>
                 <div className="rounded-lg border border-gray-200 bg-white p-3 dark:border-emerald-900/30 dark:bg-[#0f1c18]">
-                  <CarbonTrendChart data={detail.carbon_history} />
+                  <CarbonTrendChart data={detail.carbon_history} sector={detail.company.sector} />
                 </div>
               </div>
             </>
