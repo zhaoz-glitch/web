@@ -23,6 +23,48 @@ import type {
   Template,
 } from "~/types";
 
+/** Tiny inline KPI tile used in the top context strip. */
+function KpiTile({
+  icon,
+  label,
+  value,
+  hint,
+  index = 0,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  value: React.ReactNode;
+  hint?: string;
+  index?: number;
+}) {
+  return (
+    <div
+      className="liquid-glass spotlight-card rise-in flex items-center gap-3 px-3.5 py-3 sm:px-4"
+      style={{ ["--i" as string]: index }}
+      onMouseMove={(e) => {
+        const r = e.currentTarget.getBoundingClientRect();
+        e.currentTarget.style.setProperty("--mx", `${e.clientX - r.left}px`);
+        e.currentTarget.style.setProperty("--my", `${e.clientY - r.top}px`);
+      }}
+    >
+      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-50 to-emerald-100 text-emerald-700 ring-1 ring-emerald-200/70 dark:from-emerald-950/60 dark:to-emerald-900/40 dark:text-emerald-300 dark:ring-emerald-800/40">
+        {icon}
+      </div>
+      <div className="min-w-0">
+        <div className="text-[10px] font-medium uppercase tracking-wider text-gray-400 dark:text-gray-500">
+          {label}
+        </div>
+        <div className="mt-0.5 truncate text-base font-semibold tabular-nums text-gray-900 dark:text-gray-100">
+          {value}
+        </div>
+        {hint && (
+          <div className="truncate text-[11px] text-gray-400 dark:text-gray-500">{hint}</div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 /** Build initial filter state from fields metadata. */
 function buildInitialFilters(dimensions: Dimension[]): FilterState {
   const state: FilterState = {};
@@ -465,95 +507,185 @@ export default function Home() {
   }, [filterState, carbonMode, dimensions]);
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-[#0a1512]">
-      <Header userName={user?.name} onLogout={logout} />
-      <TabsBar />
+    <div className="relative min-h-screen bg-gray-50 dark:bg-[#0a1512]">
+      {/* Ambient emerald mesh backdrop, two soft glows at corners. */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-x-0 top-0 -z-0 h-[420px] overflow-hidden"
+      >
+        <div className="absolute -left-32 top-[-140px] h-[420px] w-[420px] rounded-full bg-emerald-200/40 blur-3xl dark:bg-emerald-900/30" />
+        <div className="absolute -right-40 top-[-100px] h-[380px] w-[380px] rounded-full bg-teal-200/30 blur-3xl dark:bg-teal-900/20" />
+      </div>
 
-      <main className="mx-auto max-w-7xl space-y-4 px-4 py-6 sm:px-6">
-        {error && (
-          <div className="flex items-center justify-between rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600 dark:border-red-900/60 dark:bg-red-950/40 dark:text-red-400">
-            <span>{error}</span>
-            {error.includes("Failed to load filters") && (
-              <button
-                type="button"
-                onClick={() => loadMetadata()}
-                className="ml-3 rounded-md bg-red-100 px-2.5 py-1 text-xs font-medium text-red-700 transition hover:bg-red-200 dark:bg-red-900/50 dark:text-red-300 dark:hover:bg-red-900/70"
-              >
-                重试
-              </button>
-            )}
+      <div className="relative z-10">
+        <Header userName={user?.name} onLogout={logout} />
+        <TabsBar />
+
+        <main className="mx-auto max-w-7xl space-y-4 px-4 py-6 sm:px-6">
+          {/* KPI context strip */}
+          <section
+            className="grid grid-cols-2 gap-3 lg:grid-cols-4"
+            aria-label="Dataset overview"
+          >
+            <KpiTile
+              index={0}
+              label="Universe"
+              value={
+                <span className="text-gradient-emerald">
+                  {dimensions.reduce((acc, d) => acc + d.fields.length, 0)}
+                </span>
+              }
+              hint="filterable fields"
+              icon={
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="3" y="3" width="7" height="7" rx="1.5" />
+                  <rect x="14" y="3" width="7" height="7" rx="1.5" />
+                  <rect x="3" y="14" width="7" height="7" rx="1.5" />
+                  <rect x="14" y="14" width="7" height="7" rx="1.5" />
+                </svg>
+              }
+            />
+            <KpiTile
+              index={1}
+              label="Sectors"
+              value={
+                <span className="text-gradient-emerald">
+                  {dimensions[0]?.fields.length
+                    ? new Set(rows.map((r) => r.sector).filter(Boolean)).size || "—"
+                  : "—"}
+                </span>
+              }
+              hint="in current results"
+              icon={
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M12 2 2 7l10 5 10-5-10-5Z" />
+                  <path d="m2 17 10 5 10-5" />
+                  <path d="m2 12 10 5 10-5" />
+                </svg>
+              }
+            />
+            <KpiTile
+              index={2}
+              label="Active Filters"
+              value={
+                <span className="text-gradient-emerald">{activeChips.length}</span>
+              }
+              hint={activeChips.length ? "applied to query" : "no filters set"}
+              icon={
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3" />
+                </svg>
+              }
+            />
+            <KpiTile
+              index={3}
+              label="Results"
+              value={
+                <span className="text-gradient-emerald">{total.toLocaleString()}</span>
+              }
+              hint={`${selectedSymbols.length} selected`}
+              icon={
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M3 3h18v18H3z" />
+                  <path d="m9 9 6 6M9 15l6-6" />
+                </svg>
+              }
+            />
+          </section>
+
+          {error && (
+            <div className="flex items-center justify-between rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600 dark:border-red-900/60 dark:bg-red-950/40 dark:text-red-400">
+              <span>{error}</span>
+              {error.includes("Failed to load filters") && (
+                <button
+                  type="button"
+                  onClick={() => loadMetadata()}
+                  className="tactile ml-3 rounded-md bg-red-100 px-2.5 py-1 text-xs font-medium text-red-700 transition hover:bg-red-200 dark:bg-red-900/50 dark:text-red-300 dark:hover:bg-red-900/70"
+                >
+                  重试
+                </button>
+              )}
+            </div>
+          )}
+
+          {/* Preset templates */}
+          <div className="rise-in" style={{ ["--i" as string]: 4 }}>
+            <TemplateSelector
+              templates={templates}
+              activeTemplateIds={activeTemplateIds}
+              onToggle={handleTemplateToggle}
+            />
           </div>
-        )}
 
-        {/* Preset templates */}
-        <TemplateSelector
-          templates={templates}
-          activeTemplateIds={activeTemplateIds}
-          onToggle={handleTemplateToggle}
-        />
+          {/* Custom filters */}
+          <div className="rise-in" style={{ ["--i" as string]: 5 }}>
+            <FilterPanel
+              dimensions={dimensions}
+              filterState={filterState}
+              carbonMode={carbonMode}
+              errors={apiFilters.errors}
+              onFilterChange={handleFilterChange}
+              onCarbonModeChange={(mode) => {
+                setCarbonMode(mode);
+                setActiveTemplateIds([]);
+              }}
+              onReset={handleReset}
+              onRun={() => execute()}
+              running={loading}
+            />
+          </div>
 
-        {/* Custom filters */}
-        <FilterPanel
-          dimensions={dimensions}
-          filterState={filterState}
-          carbonMode={carbonMode}
-          errors={apiFilters.errors}
-          onFilterChange={handleFilterChange}
-          onCarbonModeChange={(mode) => {
-            setCarbonMode(mode);
-            setActiveTemplateIds([]);
-          }}
-          onReset={handleReset}
-          onRun={() => execute()}
-          running={loading}
-        />
-
-        {/* Active filter chips */}
-        {activeChips.length > 0 && (
-          <div className="flex flex-wrap items-center gap-1.5">
-            <span className="shrink-0 text-xs text-gray-400 dark:text-gray-500">Filters:</span>
-            {activeChips.map((chip, i) => (
-              <span
-                key={`${chip.key}-${i}`}
-                className="rounded-full bg-white px-2.5 py-0.5 text-xs text-emerald-700 ring-1 ring-emerald-200 dark:bg-[#0f1c18] dark:text-emerald-400 dark:ring-emerald-900/40"
-              >
-                {chip.label}
+          {/* Active filter chips */}
+          {activeChips.length > 0 && (
+            <div
+              className="rise-in flex flex-wrap items-center gap-1.5 px-1"
+              style={{ ["--i" as string]: 6 }}
+            >
+              <span className="shrink-0 text-xs text-gray-400 dark:text-gray-500">
+                Active:
               </span>
-            ))}
+              {activeChips.map((chip, i) => (
+                <span key={`${chip.key}-${i}`} className="chip-emerald">
+                  {chip.label}
+                </span>
+              ))}
+            </div>
+          )}
+
+          {/* Results */}
+          <div className="rise-in" style={{ ["--i" as string]: 7 }}>
+            <ResultsTable
+              rows={rows}
+              total={total}
+              page={page}
+              pageSize={PAGE_SIZE}
+              sortBy={sortBy}
+              sortOrder={sortOrder}
+              loading={loading}
+              onSort={handleSort}
+              onPageChange={handlePageChange}
+              onRowClick={setDrawerSymbol}
+              onExport={handleExport}
+              exporting={exporting}
+              selectedSymbols={selectedSymbols}
+              onToggleSelect={handleToggleSelect}
+              onSelectAll={handleSelectAll}
+            />
           </div>
-        )}
 
-        {/* Results */}
-        <ResultsTable
-          rows={rows}
-          total={total}
-          page={page}
-          pageSize={PAGE_SIZE}
-          sortBy={sortBy}
-          sortOrder={sortOrder}
-          loading={loading}
-          onSort={handleSort}
-          onPageChange={handlePageChange}
-          onRowClick={setDrawerSymbol}
-          onExport={handleExport}
-          exporting={exporting}
-          selectedSymbols={selectedSymbols}
-          onToggleSelect={handleToggleSelect}
-          onSelectAll={handleSelectAll}
-        />
+          <ExportDialog
+            open={exportDialogOpen}
+            totalCount={total}
+            selectedCount={selectedSymbols.length}
+            onClose={() => setExportDialogOpen(false)}
+            onConfirm={handleExportConfirm}
+          />
 
-        <ExportDialog
-          open={exportDialogOpen}
-          totalCount={total}
-          selectedCount={selectedSymbols.length}
-          onClose={() => setExportDialogOpen(false)}
-          onConfirm={handleExportConfirm}
-        />
-
-        <footer className="pb-6 pt-2 text-center text-xs text-gray-400 dark:text-gray-500">
-          MVP · For research only, not investment advice
-        </footer>
-      </main>
+          <footer className="pb-6 pt-2 text-center text-xs text-gray-400 dark:text-gray-500">
+            MVP · For research only, not investment advice
+          </footer>
+        </main>
+      </div>
 
       {/* Detail drawer */}
       <StockDrawer symbol={drawerSymbol} onClose={() => setDrawerSymbol(null)} />
