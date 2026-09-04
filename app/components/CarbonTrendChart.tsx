@@ -90,6 +90,11 @@ export function CarbonTrendChart({ data, sector }: Props) {
     v >= 1e6 ? `${(v / 1e6).toFixed(1)}M` : v >= 1e3 ? `${(v / 1e3).toFixed(0)}K` : `${v}`;
   const fmtIntensity = (v: number) => `${v.toFixed(0)}`;
 
+  const sectorEqualsCompany =
+    sectorEnd != null &&
+    companyIntensity[sectorEnd.i] != null &&
+    Math.abs((sectorEnd.v - (companyIntensity[sectorEnd.i] as number)) / (sectorEnd.v || 1)) < 0.005;
+
   return (
     <div className="w-full">
       <div className="mb-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-gray-500 dark:text-gray-400">
@@ -106,11 +111,16 @@ export function CarbonTrendChart({ data, sector }: Props) {
           US market avg
         </span>
         <span className="flex items-center gap-1" title="Simple average across peers in the same sector with intensity data that year">
-          <span className="inline-block w-4 border-t-2 border-dotted border-violet-600 dark:border-violet-400" />
+          <span className="inline-block w-4 border-t-[2.5px] border-dotted border-violet-600 dark:border-violet-400" />
           {sector ? `${sector} avg` : "Sector avg"}
         </span>
       </div>
       <svg viewBox={`0 0 ${W} ${H}`} className="w-full" role="img" aria-label="Carbon trend chart with US market and sector average baselines">
+        <defs>
+          <filter id="sector-glow" x="-50%" y="-50%" width="200%" height="200%">
+            <feDropShadow dx="0" dy="0" stdDeviation="1.5" floodColor="#7c3aed" floodOpacity="0.45" />
+          </filter>
+        </defs>
         {/* Y axis grid lines (emission scale) */}
         {[0, 0.25, 0.5, 0.75, 1].map((t) => {
           const y = PAD.top + plotH - t * plotH;
@@ -151,21 +161,13 @@ export function CarbonTrendChart({ data, sector }: Props) {
           </rect>
         ))}
 
-        {/* Baseline reference lines (drawn under the company line) */}
-        {sectorPath && (
-          <path d={sectorPath} fill="none" strokeWidth="2" strokeDasharray="2 4" strokeLinecap="round" className="stroke-violet-600 dark:stroke-violet-400" />
-        )}
+        {/* US market baseline (drawn under company line) */}
         {usPath && (
           <path d={usPath} fill="none" strokeWidth="2" strokeDasharray="6 4" strokeLinecap="round" className="stroke-amber-600 dark:stroke-amber-400" />
         )}
         {usEnd && (
           <text x={x(usEnd.i) + 4} y={yIntensity(usEnd.v) + 3} fontSize="9" fill="#b45309" className="fill-amber-700 dark:fill-amber-400">
             US {fmtIntensity(usEnd.v)}
-          </text>
-        )}
-        {sectorEnd && sectorPath && (
-          <text x={x(sectorEnd.i) + 4} y={yIntensity(sectorEnd.v) - 6} fontSize="9" fill="#7c3aed" className="fill-violet-700 dark:fill-violet-400">
-            S {fmtIntensity(sectorEnd.v)}
           </text>
         )}
 
@@ -184,12 +186,38 @@ export function CarbonTrendChart({ data, sector }: Props) {
               className="fill-blue-600 dark:fill-blue-400"
             >
               <title>
-                {d.report_year}: {d.carbon_intensity_revenue.toFixed(1)} t/$M · US avg{" "}
-                {d.us_avg_intensity?.toFixed(1) ?? "n/a"} ({d.us_peer_count ?? 0} peers) · sector avg{" "}
-                {d.sector_avg_intensity?.toFixed(1) ?? "n/a"} ({d.sector_peer_count ?? 0} peers)
+                {d.report_year}: {d.carbon_intensity_revenue.toFixed(1)} t/$M
+                {"\n"}US avg: {d.us_avg_intensity?.toFixed(1) ?? "n/a"} ({d.us_peer_count ?? 0} peers)
+                {"\n"}Sector avg: {d.sector_avg_intensity?.toFixed(1) ?? "n/a"} ({d.sector_peer_count ?? 0} peers)
+                {d.sector_avg_intensity != null && Math.abs(d.carbon_intensity_revenue - d.sector_avg_intensity) < 0.1 ? " — same as intensity" : ""}
               </title>
             </circle>
           ) : null,
+        )}
+
+        {/* Sector baseline (drawn ON TOP of company line so it is visible even when equal) */}
+        {sectorPath && (
+          <path
+            d={sectorPath}
+            fill="none"
+            strokeWidth="2.5"
+            strokeDasharray="2 3"
+            strokeLinecap="round"
+            filter="url(#sector-glow)"
+            className="stroke-violet-600 dark:stroke-violet-400"
+          />
+        )}
+        {sectorEnd && sectorPath && (
+          <text
+            x={x(sectorEnd.i) + 4}
+            y={yIntensity(sectorEnd.v) + (sectorEqualsCompany ? 10 : -6)}
+            fontSize="9"
+            fill="#7c3aed"
+            className="fill-violet-700 dark:fill-violet-400"
+          >
+            S {fmtIntensity(sectorEnd.v)}
+            {sectorEqualsCompany ? " (same)" : ""}
+          </text>
         )}
 
         {/* X axis labels */}
@@ -207,6 +235,11 @@ export function CarbonTrendChart({ data, sector }: Props) {
           </text>
         ))}
       </svg>
+      {sector && sectorEqualsCompany && (
+        <p className="mt-1.5 text-[10px] leading-tight text-violet-600/90 dark:text-violet-400/90">
+          The {sector} baseline overlaps the company line because carbon intensity is currently estimated at sector level. Peer-level dispersion will appear once per-company disclosed data is available.
+        </p>
+      )}
     </div>
   );
 }
