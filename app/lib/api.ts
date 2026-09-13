@@ -126,6 +126,7 @@ export function getCarbonTrend(
 
 export interface ExportRequest {
   filters: Record<string, FilterCondition | string>;
+  query?: string;
   sortBy?: string;
   sortOrder?: "asc" | "desc";
   symbols?: string[];

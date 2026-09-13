@@ -53,6 +53,7 @@ export type CarbonDataMode = "true" | "false" | "all";
 
 export interface ScreenerRequest {
   filters: Record<string, FilterCondition | string>;
+  query?: string;
   page?: number;
   pageSize?: number;
   sortBy?: string;

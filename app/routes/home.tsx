@@ -249,6 +249,9 @@ export default function Home() {
   const [filterState, setFilterState] = useState<FilterState>({});
   const [carbonMode, setCarbonMode] = useState<CarbonDataMode>("true");
 
+  // Free-text search (symbol or company name)
+  const [searchQuery, setSearchQuery] = useState("");
+
   // Results
   const [rows, setRows] = useState<ScreenerRow[]>([]);
   const [total, setTotal] = useState(0);
@@ -334,6 +337,7 @@ export default function Home() {
       runScreener(
         {
           filters: apiFilters.filters,
+          query: searchQuery.trim() || undefined,
           page: targetPage,
           pageSize: PAGE_SIZE,
           sortBy,
@@ -352,7 +356,7 @@ export default function Home() {
           setLoading(false);
         });
     },
-    [apiFilters, sortBy, sortOrder],
+    [apiFilters, searchQuery, sortBy, sortOrder],
   );
 
   // Auto-run once metadata loads
@@ -363,6 +367,16 @@ export default function Home() {
       execute({ page: 1 });
     }
   }, [filterState, execute]);
+
+  // Debounced re-run when search query changes
+  useEffect(() => {
+    if (!didInitialRun.current) return;
+    const timer = setTimeout(() => {
+      setPage(1);
+      execute({ page: 1 });
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [searchQuery, execute]);
 
   const handleFilterChange = (key: string, value: FilterValue) => {
     setFilterState((prev) => ({ ...prev, [key]: value }));
@@ -423,6 +437,7 @@ export default function Home() {
     runScreener(
       {
         filters: apiFilters.filters,
+        query: searchQuery.trim() || undefined,
         page: p,
         pageSize: PAGE_SIZE,
         sortBy,
@@ -478,6 +493,7 @@ export default function Home() {
     try {
       await exportCsv({
         filters: apiFilters.filters,
+        query: searchQuery.trim() || undefined,
         sortBy,
         sortOrder,
         symbols,
@@ -503,8 +519,10 @@ export default function Home() {
     }
     if (carbonMode === "true") chips.push({ key: "carbon", label: "With carbon data" });
     if (carbonMode === "false") chips.push({ key: "carbon", label: "Without carbon data" });
+    const q = searchQuery.trim();
+    if (q) chips.push({ key: "search", label: `Search: "${q}"` });
     return chips;
-  }, [filterState, carbonMode, dimensions]);
+  }, [filterState, carbonMode, dimensions, searchQuery]);
 
   return (
     <div className="relative min-h-screen bg-gray-50 dark:bg-[#0a1512]">
@@ -608,8 +626,57 @@ export default function Home() {
             </div>
           )}
 
-          {/* Preset templates */}
+          {/* Free-text search by symbol or company name */}
           <div className="rise-in" style={{ ["--i" as string]: 4 }}>
+            <div className="liquid-glass flex items-center gap-2 px-3 py-2 sm:px-4">
+              <svg
+                className="shrink-0 text-gray-400 dark:text-gray-500"
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <circle cx="11" cy="11" r="8" />
+                <path d="m21 21-4.3-4.3" />
+              </svg>
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => {
+                  setSearchQuery(e.target.value);
+                  setActiveTemplateIds([]);
+                  setSelectedSymbols([]);
+                }}
+                placeholder="Search by ticker or company name…"
+                className="glass-input min-w-0 flex-1 text-sm"
+                aria-label="Search by ticker or company name"
+              />
+              {searchQuery && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSearchQuery("");
+                    setActiveTemplateIds([]);
+                    setSelectedSymbols([]);
+                  }}
+                  className="tactile rounded-md p-1 text-gray-400 transition hover:bg-gray-100 hover:text-gray-600 dark:hover:bg-gray-800 dark:hover:text-gray-300"
+                  aria-label="Clear search"
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M18 6 6 18" />
+                    <path d="m6 6 12 12" />
+                  </svg>
+                </button>
+              )}
+            </div>
+          </div>
+
+          {/* Preset templates */}
+          <div className="rise-in" style={{ ["--i" as string]: 5 }}>
             <TemplateSelector
               templates={templates}
               activeTemplateIds={activeTemplateIds}
@@ -618,7 +685,7 @@ export default function Home() {
           </div>
 
           {/* Custom filters */}
-          <div className="rise-in" style={{ ["--i" as string]: 5 }}>
+          <div className="rise-in" style={{ ["--i" as string]: 6 }}>
             <FilterPanel
               dimensions={dimensions}
               filterState={filterState}
@@ -639,7 +706,7 @@ export default function Home() {
           {activeChips.length > 0 && (
             <div
               className="rise-in flex flex-wrap items-center gap-1.5 px-1"
-              style={{ ["--i" as string]: 6 }}
+              style={{ ["--i" as string]: 7 }}
             >
               <span className="shrink-0 text-xs text-gray-400 dark:text-gray-500">
                 Active:
@@ -653,7 +720,7 @@ export default function Home() {
           )}
 
           {/* Results */}
-          <div className="rise-in" style={{ ["--i" as string]: 7 }}>
+          <div className="rise-in" style={{ ["--i" as string]: 8 }}>
             <ResultsTable
               rows={rows}
               total={total}
