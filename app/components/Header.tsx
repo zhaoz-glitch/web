@@ -1,4 +1,6 @@
+import { useEffect, useState } from "react";
 import { Link } from "react-router";
+import { getJobStatus, syncMarket } from "~/lib/api";
 
 interface Props {
   userName?: string;
@@ -12,6 +14,42 @@ interface Props {
  * routes like /db can render their own header.
  */
 export function Header({ userName, onLogout }: Props) {
+  const [asOf, setAsOf] = useState<string | null>(null);
+  const [syncing, setSyncing] = useState(false);
+  const [syncHint, setSyncHint] = useState<string | null>(null);
+
+  useEffect(() => {
+    getJobStatus()
+      .then((status) => {
+        const finished = status.market?.finished_at;
+        if (finished) setAsOf(finished.slice(0, 10));
+      })
+      .catch(() => {
+        /* optional chrome */
+      });
+  }, []);
+
+  const handleRefreshQuotes = async () => {
+    setSyncing(true);
+    setSyncHint(null);
+    try {
+      const result = await syncMarket();
+      if (result.status === "success") {
+        const stamp =
+          result.finished_at?.slice(0, 10) ?? new Date().toISOString().slice(0, 10);
+        setAsOf(stamp);
+        setSyncHint(`Updated ${result.rows_upserted ?? 0} quotes`);
+        window.location.reload();
+      } else {
+        setSyncHint(result.message || "Kept last snapshot");
+      }
+    } catch (e) {
+      setSyncHint(e instanceof Error ? e.message : "Quote refresh failed");
+    } finally {
+      setSyncing(false);
+    }
+  };
+
   return (
     <header className="relative overflow-hidden border-b border-emerald-700/30 bg-gradient-to-br from-emerald-600 via-teal-600 to-cyan-700 dark:border-emerald-900/50 dark:from-emerald-900 dark:via-teal-900 dark:to-cyan-950">
       {/* Decorative leaf silhouettes */}
@@ -74,16 +112,29 @@ export function Header({ userName, onLogout }: Props) {
           </div>
           <div className="flex items-center gap-4">
             <div className="hidden flex-col items-end gap-1.5 sm:flex">
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-white/12 px-2.5 py-1 text-[11px] font-medium text-white ring-1 ring-white/20 backdrop-blur-sm">
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-white/12 px-2.5 py-1 text-[11px] font-medium text-white ring-1 ring-white/20 backdrop-blur-sm">
                 <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-lime-300" />
-                Market · TradingView live
+                Market · TradingView{asOf ? ` · ${asOf}` : " live"}
               </span>
               <span className="inline-flex items-center gap-1.5 rounded-full bg-white/12 px-2.5 py-1 text-[11px] font-medium text-white ring-1 ring-white/20 backdrop-blur-sm">
                 <span className="h-1.5 w-1.5 rounded-full bg-teal-200" />
-                Carbon · Bavest annual
+                Carbon · annual disclosure
               </span>
+              {syncHint && (
+                <span className="max-w-[14rem] truncate text-[10px] text-white/70">
+                  {syncHint}
+                </span>
+              )}
             </div>
             <div className="flex items-center gap-2 border-l border-white/20 pl-4">
+              <button
+                type="button"
+                disabled={syncing}
+                onClick={handleRefreshQuotes}
+                className="rounded-md bg-white/10 px-2.5 py-1 text-xs font-medium text-white ring-1 ring-white/25 transition hover:bg-white/20 disabled:opacity-50 dark:hover:bg-white/15"
+              >
+                {syncing ? "Refreshing…" : "Refresh quotes"}
+              </button>
               <Link
                 to="/db"
                 className="rounded-md bg-white/10 px-2.5 py-1 text-xs font-medium text-white ring-1 ring-white/25 transition hover:bg-white/20 dark:hover:bg-white/15"
